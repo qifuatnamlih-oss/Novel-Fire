@@ -1,0 +1,778 @@
+:root {
+    --primary-color: #e8491d;
+    --dark-bg: #1a1a1a;
+    --nav-bg: #333;
+    --light-bg: #f4f4f4;
+    --text-color: #333;
+    --font-size-small: 1rem;
+    --font-size-medium: 1.15rem; /* Default */
+    --font-size-large: 1.3rem;
+    --font-size-xlarge: 1.45rem;
+    --white: #ffffff;
+}
+
+/* Dark Mode Variables Override */
+body.dark-mode {
+    --light-bg: #121212;
+    --text-color: #e0e0e0;
+    --white: #1e1e1e;
+    --font-size-small: 1rem;
+    --font-size-medium: 1.15rem;
+    --font-size-large: 1.3rem;
+    --font-size-xlarge: 1.45rem;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    line-height: 1.6;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+}
+
+header {
+    background: var(--dark-bg);
+    color: var(--white);
+    padding: 1.5rem 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+header h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    background: var(--nav-bg);
+    padding: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+}
+
+nav.nav-hidden {
+    transform: translateY(-100%);
+}
+
+nav a {
+    color: var(--white);
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+nav a i {
+    margin-right: 8px;
+}
+
+nav a.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+nav a:hover {
+    color: var(--primary-color);
+}
+
+.menu-toggle { display: none; }
+
+.container {
+    max-width: 1200px;
+    width: 90%;
+    margin: auto;
+    padding: 20px 0;
+}
+
+.hero {
+    background: var(--white);
+    padding: 40px;
+    margin-bottom: 30px;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.search-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.search-bar input {
+    padding: 12px;
+    width: 50%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+}
+
+.search-bar button {
+    padding: 12px 25px;
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.search-bar button i {
+    margin-right: 8px;
+}
+
+.search-bar button:hover {
+    background: #cf3d16;
+}
+
+.novel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 25px;
+}
+
+.novel-card {
+    position: relative; /* Penting untuk posisi tombol favorit di dalam kartu */
+}
+
+.novel-card {
+    background: var(--white);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.novel-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.novel-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+/* Gaya Tombol Favorit di Kartu */
+.fav-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    color: #ccc;
+    transition: color 0.3s, transform 0.2s;
+    z-index: 10;
+}
+
+.fav-btn.active { color: #e74c3c; }
+.fav-btn:hover { transform: scale(1.1); }
+
+.btn-fav-detail {
+    padding: 15px 20px;
+    background: var(--white);
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s;
+}
+
+.btn-fav-detail.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Rating Styles */
+.rating {
+    color: #f1c40f;
+    margin: 5px 0;
+    font-size: 0.95rem;
+}
+
+.rating-input-container {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stars-input { display: flex; gap: 5px; }
+
+.star-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #ccc;
+    transition: color 0.2s, transform 0.1s;
+}
+
+.star-btn.active { color: #f1c40f; }
+.star-btn:hover { transform: scale(1.2); }
+
+/* Detail Page Styles */
+.detail-header {
+    display: flex;
+    gap: 40px;
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.detail-header img {
+    width: 250px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.detail-info h1 { margin-top: 0; color: var(--dark-bg); }
+.tag { background: var(--primary-color); color: white; display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 0.9rem; }
+.synopsis { margin: 20px 0; border-top: 1px solid #eee; padding-top: 20px; }
+.btn-read { 
+    padding: 15px 30px; 
+    background: var(--primary-color); 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    cursor: pointer;
+}
+
+.btn-back { margin-bottom: 20px; display: inline-block; color: var(--text-color); text-decoration: none; font-weight: bold; }
+.btn-back:hover { color: var(--primary-color); }
+
+/* Share Buttons Styles */
+.share-container {
+    margin-top: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.share-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.share-btn:hover { transform: scale(1.1); opacity: 0.9; }
+.share-btn.whatsapp { background: #25D366; }
+.share-btn.twitter { background: #1DA1F2; }
+.share-btn.facebook { background: #1877F2; }
+
+/* Reading Progress Bar */
+.progress-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: transparent;
+    z-index: 9999;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.1s ease-out;
+}
+
+/* Reading Page Styles */
+.read-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.read-header { text-align: center; border-bottom: 2px solid var(--light-bg); margin-bottom: 30px; padding-bottom: 20px; }
+.read-header h2 { color: var(--primary-color); margin-bottom: 5px; font-size: 1.2rem; }
+.read-header h3 { margin-top: 0; }
+
+.reading-time {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.dark-mode .reading-time {
+    color: #aaa;
+}
+
+.read-actions { 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px; /* Memberi jarak antar tombol */
+    margin-bottom: 10px; 
+}
+.btn-action {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    /* Mengubah padding dan border-radius agar tombol ukuran font terlihat lebih kotak */
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-action#dark-mode-toggle { /* Mengembalikan tombol dark mode ke bentuk bulat */
+    border-radius: 50%;
+    padding: 8px 12px;
+}
+.btn-action:hover { background: var(--primary-color); color: white; }
+
+.read-content { font-size: 1.25rem; line-height: 1.8; color: #2c3e50; text-align: justify; }
+.dark-mode .read-content { color: #bdc3c7; }
+.read-content p { margin-bottom: 20px; }
+
+.read-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+/* Back to Top Button */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.back-to-top:hover {
+    transform: translateY(-5px);
+    background: #cf3d16;
+}
+
+.read-navigation button {
+    padding: 10px 20px;
+    background: var(--nav-bg);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.read-navigation button:hover { background: var(--primary-color); }
+
+/* Comment Section Styles */
+.comment-section {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 2px solid var(--light-bg);
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.comment-form input, .comment-form textarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: var(--light-bg);
+    color: var(--text-color);
+    font-family: inherit;
+}
+
+.comment-form textarea { height: 100px; resize: vertical; }
+
+.comment-list { display: flex; flex-direction: column; gap: 20px; }
+
+.comment-item {
+    background: var(--light-bg);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.comment-meta {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--primary-color);
+}
+
+.comment-item p { margin: 0; line-height: 1.5; }
+.no-comments { text-align: center; color: #888; font-style: italic; }
+
+.btn-reply-toggle {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+.btn-delete-comment {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+    margin-left: 15px;
+    font-weight: bold;
+}
+
+.btn-delete-comment:hover { color: #c0392b; }
+
+.reply-list {
+    margin-left: 20px;
+    margin-top: 15px;
+    border-left: 2px solid #ddd;
+    padding-left: 15px;
+}
+
+.reply-item { margin-bottom: 12px; font-size: 0.95rem; }
+
+.category-title {
+    border-left: 5px solid var(--primary-color);
+    padding-left: 15px;
+    margin: 30px 0 20px;
+    font-size: 1.5rem;
+}
+
+/* Chapter List Styles */
+.chapter-section {
+    margin-top: 30px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.chapter-list {
+    list-style: none;
+    padding: 0;
+}
+
+.chapter-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chapter-item:hover {
+    background-color: #f9f9f9;
+    color: var(--primary-color);
+}
+
+.chapter-item:last-child {
+    border-bottom: none;
+}
+
+/* Styling Badge Sudah Dibaca */
+.read-badge {
+    background: #27ae60;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 10px;
+    vertical-align: middle;
+    font-weight: bold;
+    text-transform: uppercase;
+    animation: fadeInBadge 0.3s ease-out;
+    display: inline-block;
+}
+
+@keyframes fadeInBadge {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Styling Tombol Tandai Belum Dibaca */
+.btn-unread {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    vertical-align: middle;
+}
+
+.btn-unread:hover {
+    background: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    transform: rotate(-15deg);
+}
+
+.chapter-item.read span {
+    color: #888;
+    transition: color 0.3s ease;
+}
+
+.chapter-item span {
+    transition: color 0.3s ease;
+}
+
+/* State saat proses penghapusan status baca */
+.chapter-item.removing-read-status .read-badge {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.chapter-item.removing-read-status span {
+    color: var(--text-color) !important;
+}
+
+/* Admin Panel Styles */
+.admin-card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.admin-form-group { margin-bottom: 15px; }
+.admin-form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+.admin-form-group input, .admin-form-group textarea, .admin-form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.btn-admin { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.btn-danger { background: #e74c3c; }
+.btn-success { background: #27ae60; }
+
+/* Admin Table Styles */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.admin-table th, .admin-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+.admin-table th { background: #f8f9fa; }
+.admin-actions { display: flex; gap: 8px; }
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+.btn-page {
+    padding: 6px 12px;
+    border: 1px solid var(--primary-color);
+    background: var(--white);
+    color: var(--primary-color);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.btn-page.active { background: var(--primary-color); color: white; }
+.btn-page:hover:not(.active) { background: #fdf2f0; }
+
+/* Chapter Manager Admin Styles */
+.chapter-admin-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chapter-admin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+.chapter-admin-item h4 { margin: 0; font-size: 1rem; }
+
+footer {
+    text-align: center;
+    padding: 30px;
+    background: var(--dark-bg);
+    color: var(--white);
+    margin-top: 40px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header { padding: 1rem 0; }
+    header h1 { font-size: 1.5rem; }
+
+    .menu-toggle {
+        display: block;
+        width: 100%;
+        text-align: center;
+        color: white;
+        background: var(--nav-bg);
+        padding: 10px 0;
+        cursor: pointer;
+        font-weight: bold;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    nav {
+        flex-direction: column;
+        padding: 0;
+        position: sticky;
+        top: 0;
+    }
+
+    nav a {
+        display: none; /* Sembunyikan menu secara default di mobile */
+        margin: 0;
+        padding: 12px 0;
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    nav a:last-child {
+        border-bottom: none;
+    }
+
+    nav.mobile-active a {
+        display: block; /* Tampilkan menu saat tombol toggle diklik */
+    }
+
+    .container {
+        width: 95%;
+        padding: 15px 0;
+    }
+
+    .hero {
+        padding: 30px 20px;
+    }
+
+    .search-bar {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .search-bar input,
+    .search-bar button {
+        width: 100%;
+        box-sizing: border-box; /* Ensure padding and border are included in the element's total width */
+    }
+
+    .novel-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .category-title {
+        font-size: 1.3rem;
+        margin: 25px 0 15px;
+    }
+
+    footer {
+        padding: 20px;
+    }
+
+    .detail-header { 
+        flex-direction: column; 
+        text-align: center; 
+    }
+    .detail-header img { 
+        width: 200px; 
+        margin: 0 auto; 
+    }
+
+    .read-actions {
+        justify-content: center; /* Pusatkan tombol di mobile */
+    }
+}
+
+/* Font Size Classes */
+.read-content.font-small { font-size: var(--font-size-small); }
+.read-content.font-medium { font-size: var(--font-size-medium); }
+.read-content.font-large { font-size: var(--font-size-large); }
+.read-content.font-xlarge { font-size: var(--font-size-xlarge); }
+
+/* Pastikan font-size di dark mode juga mengikuti */
+.dark-mode .read-content.font-small { font-size: var(--font-size-small); }
+.dark-mode .read-content.font-medium { font-size: var(--font-size-medium); }
+.dark-mode .read-content.font-large { font-size: var(--font-size-large); }
+.dark-mode .read-content.font-xlarge { font-size: var(--font-size-xlarge); }

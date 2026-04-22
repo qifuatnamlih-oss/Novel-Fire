@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelFire - Baca Novel Korea, China & Jepang</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="index.html">NovelFire</a></h1>
+    </header>
+
+    <nav id="main-nav">
+        <div class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i> Menu</div>
+        <a href="#" class="nav-link active" data-category="all"><i class="fas fa-home"></i> Home</a>
+        <a href="#" class="nav-link" data-category="Korea"><i class="fas fa-globe-asia"></i> Korea</a>
+        <a href="#" class="nav-link" data-category="China"><i class="fas fa-scroll"></i> China</a>
+        <a href="#" class="nav-link" data-category="Jepang"><i class="fas fa-book-open"></i> Jepang</a>
+        <a href="#" class="nav-link" data-category="all"><i class="fas fa-bolt"></i> Terbaru</a>
+    </nav>
+
+    <div class="container">
+        <!-- Bagian Riwayat Membaca -->
+        <div id="history-section" style="display:none; margin-bottom: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="category-title">Terakhir Dibaca</h2>
+                <button onclick="clearHistory()" style="background:none; border:none; color:var(--primary-color); cursor:pointer; font-weight: bold;">Hapus Riwayat</button>
+            </div>
+            <div class="novel-grid" id="history-grid"></div>
+        </div>
+
+        <!-- Bagian Novel Favorit -->
+        <div id="favorites-section" style="display:none; margin-bottom: 40px;">
+            <h2 class="category-title">Novel Favorit</h2>
+            <div class="novel-grid" id="favorites-grid"></div>
+        </div>
+
+        <section class="hero">
+            <h2>Cari Novel Favoritmu</h2>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Masukkan judul novel...">
+                <button><i class="fas fa-search"></i> Cari</button>
+            </div>
+        </section>
+
+        <h2 class="category-title">Novel Populer</h2>
+        <div class="novel-grid" id="novel-grid">
+            <!-- Data akan diisi oleh JavaScript -->
+        </div>
+    </div>
+
+    <footer>
+        <p>NovelFire &copy; 2024 - Platform Baca Novel Terlengkap</p>
+        <p><a href="admin.html" style="color: #888; text-decoration: none; font-size: 0.8rem;"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
+    </footer>
+    <button id="back-to-top" class="back-to-top" title="Kembali ke Atas"><i class="fas fa-chevron-up"></i></button>
+    <script src="script.js"></script>
+</body>
+</html>
