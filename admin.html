@@ -24,6 +24,7 @@
                 <div class="admin-form-group">
                     <label>Password</label>
                     <input type="password" id="login-password" required>
+                    <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary-color); display: block; margin-top: 5px; text-align: right; text-decoration: none;">Lupa Password?</a>
                 </div>
                 <button type="submit" class="btn-admin btn-success" style="width: 100%;">Masuk</button>
             </form>
@@ -56,7 +57,8 @@
                 </div>
                 <div class="admin-form-group">
                     <label>URL Gambar Cover</label>
-                    <input type="text" id="adm-image" value="https://via.placeholder.com/150x200">
+                    <input type="file" id="adm-image" accept="image/*">
+                    <input type="hidden" id="adm-image-url-hidden"> <!-- Untuk menyimpan URL gambar yang sudah ada saat edit -->
                 </div>
                 <div class="admin-form-group">
                     <label>Sinopsis</label>
@@ -64,6 +66,7 @@
                 </div>
                 <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database Lokal</button>
                 <button type="button" id="cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetForm()">Batal</button>
+                <img id="image-preview" src="https://via.placeholder.com/150x200" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;">
             </form>
         </div>
 
@@ -91,7 +94,7 @@
 
         <div class="admin-card">
             <h2><i class="fas fa-tasks"></i> Kelola Novel Kustom</h2>
-            <div id="custom-novels-list">
+            <div id="admin-novels-list">
                 <!-- Tabel novel kustom akan dimuat di sini -->
             </div>
         </div>
@@ -135,6 +138,22 @@
                 <i class="fas fa-trash-alt"></i> Reset Seluruh Website
             </button>
         </div>
+
+        <div class="admin-card">
+            <h2><i class="fas fa-user-cog"></i> Pengaturan Akun Admin</h2>
+            <p>Perbarui email atau password akun admin Anda yang terdaftar di Supabase.</p>
+            <form id="update-admin-form">
+                <div class="admin-form-group">
+                    <label>Email Baru (Kosongkan jika tidak ingin diubah)</label>
+                    <input type="email" id="upd-email" placeholder="emailbaru@example.com">
+                </div>
+                <div class="admin-form-group">
+                    <label>Password Baru (Kosongkan jika tidak ingin diubah)</label>
+                    <input type="password" id="upd-password" placeholder="Minimal 6 karakter">
+                </div>
+                <button type="submit" class="btn-admin btn-success">Perbarui Kredensial</button>
+            </form>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -154,6 +173,36 @@
                 adminContent.style.display = 'none';
             }
         }
+
+        // --- FITUR LUPA PASSWORD ---
+        window.handleForgotPassword = async function(e) {
+            e.preventDefault();
+            const email = prompt("Masukkan email admin Anda untuk menerima tautan reset password:");
+            if (!email) return;
+
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.href, // Mengarahkan kembali ke halaman ini
+            });
+
+            if (error) alert("Gagal mengirim email: " + error.message);
+            else alert("Tautan pemulihan telah dikirim ke email Anda. Silakan cek kotak masuk.");
+        };
+
+        // Mendeteksi jika user datang dari tautan reset password
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === "PASSWORD_RECOVERY") {
+                const newPassword = prompt("Sesi pemulihan aktif. Masukkan password baru Anda (min. 6 karakter):");
+                if (newPassword) {
+                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    if (error) alert("Gagal memperbarui password: " + error.message);
+                    else {
+                        alert("Password berhasil diperbarui! Silakan login kembali.");
+                        await supabase.auth.signOut();
+                        window.location.reload();
+                    }
+                }
+            }
+        });
 
         document.getElementById('login-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -180,6 +229,75 @@
 
         let currentCommentPage = 1;
         const commentsPerPage = 10;
+        let activeNovelIdForChapters = null;
+
+        // --- LOGIKA MANAJEMEN BAB ---
+        window.openChapterManager = function(novelId) {
+            activeNovelIdForChapters = novelId;
+            const novel = novels.find(n => n.id === novelId);
+            if (!novel) return;
+
+            document.getElementById('chapter-mgr-title').innerText = `Kelola Bab: ${novel.title}`;
+            document.getElementById('chapter-manager-card').style.display = 'block';
+            renderChapterList(novel.chapters || []);
+            window.scrollTo({ top: document.getElementById('chapter-manager-card').offsetTop - 20, behavior: 'smooth' });
+        };
+
+        window.closeChapterManager = function() {
+            document.getElementById('chapter-manager-card').style.display = 'none';
+            activeNovelIdForChapters = null;
+        };
+
+        function renderChapterList(chapters) {
+            const container = document.getElementById('chapter-admin-list');
+            if (chapters.length === 0) {
+                container.innerHTML = '<p>Belum ada bab.</p>';
+                return;
+            }
+            container.innerHTML = chapters.map(ch => `
+                <div class="chapter-admin-item">
+                    <h4>${ch.title}</h4>
+                    <div>
+                        <button onclick="deleteChapter(${ch.id})" class="btn-admin btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('chapter-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeNovelIdForChapters) return;
+
+            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const newChapter = {
+                id: Date.now(),
+                title: document.getElementById('ch-title').value,
+                content: document.getElementById('ch-content').value
+            };
+
+            const updatedChapters = [...(novel.chapters || []), newChapter];
+            const { error } = await supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+
+            if (error) alert(error.message);
+            else {
+                alert('Bab berhasil ditambahkan!');
+                document.getElementById('chapter-form').reset();
+                await loadGlobalData();
+                renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
+            }
+        });
+
+        window.deleteChapter = async function(chapterId) {
+            if (!confirm('Hapus bab ini?')) return;
+            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const updatedChapters = novel.chapters.filter(ch => ch.id !== chapterId);
+            const { error } = await supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+            if (error) alert(error.message);
+            else {
+                await loadGlobalData();
+                renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
+            }
+        };
 
         function renderAdminNovels() {
             const listContainer = document.getElementById('admin-novels-list');
@@ -392,6 +510,30 @@
             document.getElementById('comment-filter').addEventListener('input', (e) => {
                 currentCommentPage = 1; // Reset ke halaman 1 saat mencari
                 renderCommentModeration(e.target.value);
+            });
+
+            // Logika Update Email/Password Admin
+            document.getElementById('update-admin-form')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newEmail = document.getElementById('upd-email').value;
+                const newPassword = document.getElementById('upd-password').value;
+                const updateData = {};
+
+                if (newEmail) updateData.email = newEmail;
+                if (newPassword) updateData.password = newPassword;
+
+                if (Object.keys(updateData).length === 0) {
+                    alert('Silakan isi email atau password yang ingin diubah.');
+                    return;
+                }
+
+                const { error } = await supabase.auth.updateUser(updateData);
+                if (error) {
+                    alert('Gagal memperbarui: ' + error.message);
+                } else {
+                    alert('Berhasil! Jika Anda mengubah email, silakan cek kotak masuk email baru untuk konfirmasi.');
+                    document.getElementById('update-admin-form').reset();
+                }
             });
         });
 
