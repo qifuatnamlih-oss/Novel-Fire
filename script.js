@@ -9,9 +9,9 @@ window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 if (window.supabase && typeof window.supabase.createClient === 'function') {
     window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
         auth: {
-            persistSession: false, // Mengatasi masalah 'Tracking Prevention' dengan menonaktifkan penyimpanan sesi di localStorage
-            autoRefreshToken: false,
-            detectSessionInUrl: false
+            persistSession: true, // Diaktifkan agar admin tidak perlu login ulang setiap refresh
+            autoRefreshToken: true,
+            detectSessionInUrl: true // WAJIB TRUE untuk fitur reset password
         }
     });
 }
@@ -42,6 +42,13 @@ const getNextNovelId = () => {
     return novels.length > 0 ? Math.max(...novels.map(n => n.id)) + 1 : 1;
 };
 
+// Helper untuk mencegah XSS (Sanitasi input user)
+function escapeHTML(str) {
+    const p = document.createElement('p');
+    p.textContent = str;
+    return p.innerHTML;
+}
+
 // Helper untuk merender HTML kartu novel
 function renderNovelCard(novel) {
     const rating = localStorage.getItem(`rating_${novel.id}`) || 0;
@@ -49,7 +56,7 @@ function renderNovelCard(novel) {
     const isFav = favorites.includes(novel.id);
     
     let stars = '';
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 5; i++) { // Perbaikan: Menggunakan <= 5 untuk 5 bintang
         stars += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
     }
 
@@ -399,7 +406,7 @@ function setupComments(novelId, chapterId) {
                 <div class="comment-meta">
                     <strong>${c.name}</strong> • <small>${c.date}</small>
                 </div>
-                <p>${c.text}</p>
+                <p>${escapeHTML(c.text)}</p>
                 <button class="btn-reply-toggle" data-id="${c.id}">Balas</button>
                 <button class="btn-delete-comment" data-id="${c.id}" data-type="parent"><i class="fas fa-trash"></i> Hapus</button>
                 <div class="reply-form-container" id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
@@ -414,7 +421,7 @@ function setupComments(novelId, chapterId) {
                         ${c.replies.map(r => `
                             <div class="reply-item">
                                 <div class="comment-meta"><strong>${r.name}</strong> • <small>${r.date}</small></div>
-                                <p>${r.text}</p>
+                                <p>${escapeHTML(r.text)}</p>
                                 <button class="btn-delete-comment" data-id="${r.id}" data-type="reply"><i class="fas fa-trash"></i> Hapus</button>
                             </div>
                         `).join('')}
