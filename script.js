@@ -20,8 +20,8 @@ async function loadGlobalData() {
             return false;
         }
         
-        console.log("Data berhasil diambil dari Supabase:", data);
-        novels = data; // Data novel sekarang berasal langsung dari Supabase
+        novels = data;
+        console.log("Data novel berhasil dimuat dari Supabase Global:", novels);
         return true; // Berhasil memuat data
     } catch (error) {
         console.error("Kesalahan saat memuat data novel dari Supabase:", error);
@@ -314,7 +314,10 @@ function displayReadingContent() {
                 <p class="reading-time"><i class="far fa-clock"></i> ${readingTime} menit membaca</p>
             </div>
             <div class="read-content">
-                ${chapter.content.split('\n').map(p => `<p>${p}</p>`).join('')}
+                ${chapter.content.split(/\r?\n/)
+                    .filter(line => line.trim() !== "")
+                    .map(p => `<p>${p.trim()}</p>`)
+                    .join('')}
             </div>
             <div class="read-navigation">
                 ${prevChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${prevChapter.id}'"><i class="fas fa-arrow-left"></i> Bab Sebelumnya</button>` : '<div></div>'}
@@ -343,6 +346,28 @@ function displayReadingContent() {
     } else {
         readContainer.innerHTML = "<h2>Bab tidak ditemukan.</h2>";
     }
+}
+
+// Fungsi untuk mengelola Dark Mode
+function setupDarkMode() {
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    // Cek di body atau localStorage
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    if (!toggleBtn) return;
+
+    const icon = toggleBtn.querySelector('i');
+    if (document.body.classList.contains('dark-mode') && icon) {
+        icon.className = 'fas fa-sun';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    });
 }
 
 // Fungsi untuk mengelola Komentar
@@ -484,16 +509,15 @@ function setupComments(novelId, chapterId) {
 
 // Fungsi untuk mengelola Ukuran Font
 function setupFontSizeControl() {
-    const decreaseBtn = document.getElementById('font-size-decrease');
-    const increaseBtn = document.getElementById('font-size-increase');
     const readContent = document.querySelector('.read-content');
-
-    if (!decreaseBtn || !increaseBtn || !readContent) return;
+    if (!readContent) return;
 
     const fontSizes = ['font-small', 'font-medium', 'font-large'];
     let currentSizeIndex = 1; // Default ke 'font-medium'
 
-    // Muat preferensi ukuran font dari localStorage
+    // Bersihkan class lama sebelum menerapkan yang baru
+    fontSizes.forEach(size => readContent.classList.remove(size));
+
     const savedFontSize = localStorage.getItem('fontSize');
     if (savedFontSize) {
         currentSizeIndex = fontSizes.indexOf(savedFontSize);
@@ -503,7 +527,7 @@ function setupFontSizeControl() {
         readContent.classList.add(fontSizes[currentSizeIndex]); // Terapkan default
     }
 
-    decreaseBtn.addEventListener('click', () => {
+    document.getElementById('font-size-decrease')?.addEventListener('click', () => {
         if (currentSizeIndex > 0) {
             readContent.classList.remove(fontSizes[currentSizeIndex]);
             currentSizeIndex--;
@@ -512,7 +536,7 @@ function setupFontSizeControl() {
         }
     });
 
-    increaseBtn.addEventListener('click', () => {
+    document.getElementById('font-size-increase')?.addEventListener('click', () => {
         if (currentSizeIndex < fontSizes.length - 1) {
             readContent.classList.remove(fontSizes[currentSizeIndex]);
             currentSizeIndex++;
@@ -736,6 +760,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Muat data global terlebih dahulu
     await loadGlobalData();
 
+    setupDarkMode(); // Harus dipanggil paling awal untuk kenyamanan visual
+
     if (document.getElementById('novel-grid')) {
         displayNovels(novels);
         displayFavorites();
@@ -748,7 +774,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (document.getElementById('read-container')) {
         displayReadingContent();
-        // setupDarkMode dan setupFontSizeControl dipanggil di dalam displayReadingContent
     }
     setupMobileMenu();
     setupSmartNav();

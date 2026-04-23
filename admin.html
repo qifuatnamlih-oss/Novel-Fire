@@ -13,7 +13,27 @@
         <h1><a href="index.html">NovelFire Admin</a></h1>
     </header>
 
-    <div class="container">
+    <div class="container" id="login-section">
+        <div class="admin-card" style="max-width: 400px; margin: 50px auto;">
+            <h2><i class="fas fa-lock"></i> Admin Login</h2>
+            <form id="login-form">
+                <div class="admin-form-group">
+                    <label>Email Admin</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="admin-form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn-admin btn-success" style="width: 100%;">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="admin-content" style="display: none;">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <button onclick="handleLogout()" class="btn-admin btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
         <div class="admin-card">
             <h2 id="form-title"><i class="fas fa-plus-circle"></i> Tambah Novel Baru</h2>
             <form id="add-novel-form">
@@ -119,15 +139,38 @@
 
     <script src="script.js"></script>
     <script>
-        // Proteksi login sederhana
-        if (localStorage.getItem('admin_logged_in') !== 'true') {
-            const pass = prompt('Masukkan Password Admin:');
-            if (pass === 'admin123') {
-                localStorage.setItem('admin_logged_in', 'true');
+        // --- SISTEM OTENTIKASI SUPABASE ---
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            const loginSection = document.getElementById('login-section');
+            const adminContent = document.getElementById('admin-content');
+
+            if (session) {
+                loginSection.style.display = 'none';
+                adminContent.style.display = 'block';
+                renderAdminNovels();
             } else {
-                alert('Akses Ditolak');
-                location.href = 'index.html';
+                loginSection.style.display = 'block';
+                adminContent.style.display = 'none';
             }
+        }
+
+        document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert('Gagal Login: ' + error.message);
+            } else {
+                checkSession();
+            }
+        });
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            checkSession();
         }
 
         const form = document.getElementById('add-novel-form');
@@ -138,12 +181,11 @@
         let currentCommentPage = 1;
         const commentsPerPage = 10;
 
-        function renderCustomNovels() {
-            const listContainer = document.getElementById('custom-novels-list');
-            const custom = JSON.parse(localStorage.getItem('custom_novels')) || [];
+        function renderAdminNovels() {
+            const listContainer = document.getElementById('admin-novels-list');
             
-            if (custom.length === 0) {
-                listContainer.innerHTML = '<p>Belum ada novel kustom yang ditambahkan.</p>';
+            if (novels.length === 0) {
+                listContainer.innerHTML = '<p>Tidak ada novel di database.</p>';
                 return;
             }
 
@@ -159,7 +201,7 @@
                     <tbody>
             `;
 
-            custom.forEach(n => {
+            novels.forEach(n => {
                 html += `
                     <tr>
                         <td>${n.title}</td>
@@ -272,8 +314,7 @@
         }
 
         window.editNovel = function(id) {
-            const custom = JSON.parse(localStorage.getItem('custom_novels')) || [];
-            const novel = custom.find(n => n.id === id);
+            const novel = novels.find(n => n.id === id);
             if (!novel) return;
 
             document.getElementById('adm-id').value = novel.id;
@@ -289,12 +330,14 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        window.deleteNovel = function(id) {
+        window.deleteNovel = async function(id) {
             if (confirm('Hapus novel ini secara permanen?')) {
-                let custom = JSON.parse(localStorage.getItem('custom_novels')) || [];
-                custom = custom.filter(n => n.id !== id);
-                localStorage.setItem('custom_novels', JSON.stringify(custom));
-                renderCustomNovels();
+                const { error } = await supabase.from('novels').delete().eq('id', id);
+                if (error) alert(error.message);
+                else {
+                    await loadGlobalData();
+                    renderAdminNovels();
+                }
             }
         }
 
@@ -302,14 +345,13 @@
             form.reset();
             document.getElementById('adm-id').value = '';
             formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Novel Baru';
-            submitBtn.textContent = 'Simpan ke Database Lokal';
+            submitBtn.textContent = 'Simpan ke Database Global';
             cancelBtn.style.display = 'none';
         }
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('adm-id').value;
-            const custom = JSON.parse(localStorage.getItem('custom_novels')) || [];
             
             const novelData = {
                 title: document.getElementById('adm-title').value,
@@ -320,28 +362,29 @@
             };
 
             if (id) {
-                const index = custom.findIndex(n => n.id === parseInt(id));
-                if (index !== -1) {
-                    custom[index] = { ...custom[index], ...novelData };
-                    alert('Novel berhasil diperbarui!');
-                }
+                const { error } = await supabase.from('novels').update(novelData).eq('id', id);
+                if (error) alert(error.message);
+                else alert('Novel berhasil diperbarui secara global!');
             } else {
-                const newNovel = {
-                    id: getNextNovelId(),
+                const { error } = await supabase.from('novels').insert([{
                     ...novelData,
-                    chapters: [{ id: 1, title: "Bab 1: Awal Perjalanan", content: "Teks konten bab pertama novel baru Anda..." }]
-                };
-                custom.push(newNovel);
-                alert('Novel berhasil ditambahkan!');
+                    chapters: [{ id: 1, title: "Bab 1: Awal Perjalanan", content: "Teks konten bab pertama..." }]
+                }]);
+                if (error) alert(error.message);
+                else alert('Novel berhasil ditambahkan secara global!');
             }
 
-            localStorage.setItem('custom_novels', JSON.stringify(custom));
+            await loadGlobalData();
             resetForm();
-            renderCustomNovels();
+            renderAdminNovels();
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            renderCustomNovels();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Tunggu data dari Supabase dimuat sebelum render dashboard
+            if (typeof loadGlobalData === 'function') {
+                await loadGlobalData();
+            }
+            renderAdminNovels();
             renderCommentModeration(); // Panggil pertama kali tanpa filter
             renderBannedUsers();
 

@@ -16,10 +16,6 @@ body.dark-mode {
     --light-bg: #121212;
     --text-color: #e0e0e0;
     --white: #1e1e1e;
-    --font-size-small: 1rem;
-    --font-size-medium: 1.15rem;
-    --font-size-large: 1.3rem;
-    --font-size-xlarge: 1.45rem;
 }
 
 body {
