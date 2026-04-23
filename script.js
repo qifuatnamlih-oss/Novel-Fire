@@ -20,6 +20,7 @@ async function loadGlobalData() {
             return false;
         }
         
+        console.log("Data berhasil diambil dari Supabase:", data);
         novels = data; // Data novel sekarang berasal langsung dari Supabase
         return true; // Berhasil memuat data
     } catch (error) {
