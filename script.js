@@ -6,8 +6,8 @@ window.novels = window.novels || [];
 window.SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
 window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'; 
 
-if (!window.supabase) {
-    window.supabase = Supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+if (window.supabase && typeof window.supabase.createClient === 'function') {
+    window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
         auth: {
             persistSession: false, // Mengatasi masalah 'Tracking Prevention' dengan menonaktifkan penyimpanan sesi di localStorage
             autoRefreshToken: false,
