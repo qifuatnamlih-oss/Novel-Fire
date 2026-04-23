@@ -444,7 +444,13 @@
             document.getElementById('adm-title').value = novel.title;
             document.getElementById('adm-category').value = novel.category;
             document.getElementById('adm-genre').value = novel.genre;
-            document.getElementById('adm-image').value = novel.image;
+            
+            // Perbaikan: Jangan set .value pada input file. 
+            // Gunakan hidden input untuk menyimpan URL lama dan update preview.
+            document.getElementById('adm-image-url-hidden').value = novel.image;
+            document.getElementById('image-preview').src = novel.image;
+            document.getElementById('adm-image').value = ''; 
+            
             document.getElementById('adm-desc').value = novel.description;
 
             formTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Novel';
@@ -455,7 +461,7 @@
 
         window.deleteNovel = async function(id) {
             if (confirm('Hapus novel ini secara permanen?')) {
-                const { error } = await supabase.from('novels').delete().eq('id', id);
+                const { error } = await window.supabase.from('novels').delete().eq('id', id);
                 if (error) alert(error.message);
                 else {
                     await loadGlobalData();
@@ -467,29 +473,58 @@
         window.resetForm = function() {
             form.reset();
             document.getElementById('adm-id').value = '';
+            document.getElementById('adm-image-url-hidden').value = '';
+            document.getElementById('image-preview').src = "https://via.placeholder.com/150x200";
             formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Novel Baru';
-            submitBtn.textContent = 'Simpan ke Database Global';
+            submitBtn.textContent = 'Simpan ke Database';
             cancelBtn.style.display = 'none';
         }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('adm-id').value;
+            const imageFile = document.getElementById('adm-image').files[0];
+            const existingImageUrl = document.getElementById('adm-image-url-hidden').value;
+            let imageUrl = existingImageUrl || "https://via.placeholder.com/150x200";
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Memproses...';
+
+            // Logika Unggah ke Supabase Storage jika ada file baru
+            if (imageFile) {
+                const fileName = `${Date.now()}-${imageFile.name}`;
+                const { data, error: uploadError } = await window.supabase.storage
+                    .from('novel-covers')
+                    .upload(fileName, imageFile);
+
+                if (uploadError) {
+                    alert('Gagal unggah gambar: ' + uploadError.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = id ? 'Perbarui Novel' : 'Simpan ke Database';
+                    return;
+                }
+
+                const { data: publicUrlData } = window.supabase.storage
+                    .from('novel-covers')
+                    .getPublicUrl(fileName);
+                
+                imageUrl = publicUrlData.publicUrl;
+            }
             
             const novelData = {
                 title: document.getElementById('adm-title').value,
                 category: document.getElementById('adm-category').value,
                 genre: document.getElementById('adm-genre').value,
-                image: document.getElementById('adm-image').value,
+                image: imageUrl,
                 description: document.getElementById('adm-desc').value
             };
 
             if (id) {
-                const { error } = await supabase.from('novels').update(novelData).eq('id', id);
+                const { error } = await window.supabase.from('novels').update(novelData).eq('id', id);
                 if (error) alert(error.message);
                 else alert('Novel berhasil diperbarui secara global!');
             } else {
-                const { error } = await supabase.from('novels').insert([{
+                const { error } = await window.supabase.from('novels').insert([{
                     ...novelData,
                     chapters: [{ id: 1, title: "Bab 1: Awal Perjalanan", content: "Teks konten bab pertama..." }]
                 }]);
@@ -500,6 +535,9 @@
             await loadGlobalData();
             resetForm();
             renderAdminNovels();
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = id ? 'Perbarui Novel' : 'Simpan ke Database';
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -516,6 +554,18 @@
             document.getElementById('comment-filter').addEventListener('input', (e) => {
                 currentCommentPage = 1; // Reset ke halaman 1 saat mencari
                 renderCommentModeration(e.target.value);
+            });
+
+            // Preview gambar saat pilih file
+            document.getElementById('adm-image').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('image-preview').src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
 
             // Logika Update Email/Password Admin
