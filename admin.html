@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - NovelFire</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -160,7 +161,11 @@
     <script>
         // --- SISTEM OTENTIKASI SUPABASE ---
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            if (!window.supabase || !window.supabase.auth) {
+                console.error("Supabase client belum diinisialisasi.");
+                return;
+            }
+            const { data: { session } } = await window.supabase.auth.getSession();
             const loginSection = document.getElementById('login-section');
             const adminContent = document.getElementById('admin-content');
 
@@ -180,7 +185,7 @@
             const email = prompt("Masukkan email admin Anda untuk menerima tautan reset password:");
             if (!email) return;
 
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.href, // Mengarahkan kembali ke halaman ini
             });
 
@@ -189,15 +194,15 @@
         };
 
         // Mendeteksi jika user datang dari tautan reset password
-        supabase.auth.onAuthStateChange(async (event, session) => {
+        window.supabase?.auth?.onAuthStateChange(async (event, session) => {
             if (event === "PASSWORD_RECOVERY") {
                 const newPassword = prompt("Sesi pemulihan aktif. Masukkan password baru Anda (min. 6 karakter):");
                 if (newPassword) {
-                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    const { error } = await window.supabase.auth.updateUser({ password: newPassword });
                     if (error) alert("Gagal memperbarui password: " + error.message);
                     else {
                         alert("Password berhasil diperbarui! Silakan login kembali.");
-                        await supabase.auth.signOut();
+                        await window.supabase.auth.signOut();
                         window.location.reload();
                     }
                 }
@@ -209,7 +214,7 @@
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            const { error } = await window.supabase.auth.signInWithPassword({ email, password });
             if (error) {
                 alert('Gagal Login: ' + error.message);
             } else {
@@ -218,7 +223,7 @@
         });
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await window.supabase.auth.signOut();
             checkSession();
         }
 
@@ -502,6 +507,7 @@
             if (typeof loadGlobalData === 'function') {
                 await loadGlobalData();
             }
+            await checkSession();
             renderAdminNovels();
             renderCommentModeration(); // Panggil pertama kali tanpa filter
             renderBannedUsers();
