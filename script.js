@@ -1,15 +1,13 @@
 // Data novel dalam bentuk Array of Objects
-if (typeof novels === 'undefined') {
-    var novels = [];
-}
+window.novels = window.novels || [];
 
 // Inisialisasi Supabase Client
 // Ganti dengan URL dan Anon Key proyek Supabase Anda
-var SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'; 
+window.SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
+window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'; 
 
-if (typeof supabase === 'undefined') {
-    var supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+if (!window.supabase) {
+    window.supabase = Supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
         auth: {
             persistSession: false, // Mengatasi masalah 'Tracking Prevention' dengan menonaktifkan penyimpanan sesi di localStorage
             autoRefreshToken: false,
@@ -21,7 +19,7 @@ if (typeof supabase === 'undefined') {
 // Fungsi untuk memuat data dari data.json (Publik)
 async function loadGlobalData() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await window.supabase
             .from('novels') // Nama tabel novel Anda di Supabase
             .select('*'); // Ambil semua kolom
         
