@@ -19,6 +19,11 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 // Fungsi untuk memuat data dari data.json (Publik)
 async function loadGlobalData() {
     try {
+        if (!window.supabase || typeof window.supabase.from !== 'function') {
+            console.warn("Supabase client belum siap atau gagal dimuat.");
+            return false;
+        }
+
         const { data, error } = await window.supabase
             .from('novels') // Nama tabel novel Anda di Supabase
             .select('*'); // Ambil semua kolom
