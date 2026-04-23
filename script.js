@@ -1,14 +1,31 @@
-// 1. Inisialisasi Supabase dengan pengecekan library
-const SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Gunakan variabel lingkungan jika memungkinkan
+// Gunakan pengecekan untuk menghindari deklarasi ganda
+if (typeof supabase === 'undefined') {
+    const SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4';
 
-let supabase;
-if (typeof supabase !== 'undefined') {
-    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else if (typeof Supabase !== 'undefined') {
-    supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Inisialisasi client secara global hanya jika belum ada
+    var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
+let novels = [];
+
+// Gunakan supabaseClient di dalam fungsi
+async function loadGlobalData() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('novels')
+            .select('*');
+        
+        if (error) throw error;
+        
+        novels = data || [];
+        console.log("Data berhasil dimuat:", novels);
+        return true;
+    } catch (error) {
+        console.error("Kesalahan Supabase:", error.message);
+        return false;
+    }
+}
 let novels = [];
 
 // 2. Perbaikan fungsi loadGlobalData (Pemisahan data custom & global)
