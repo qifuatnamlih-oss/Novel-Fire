@@ -16,11 +16,11 @@ async function loadGlobalData() {
             .select('*'); // Ambil semua kolom
         
         if (error) {
-            console.error("Error fetching novels from Supabase:", error);
+            console.error("Error fetching novels from Supabase:", error.message);
             return false;
         }
         
-        novels = data;
+        novels = data || [];
         console.log("Data novel berhasil dimuat dari Supabase Global:", novels);
         return true; // Berhasil memuat data
     } catch (error) {
@@ -165,8 +165,8 @@ function setupSearch() {
 
         // Filter berdasarkan judul atau genre
         const filtered = novels.filter(novel => 
-            novel.title.toLowerCase().includes(searchTerm) || 
-            novel.genre.toLowerCase().includes(searchTerm)
+            (novel.title || "").toLowerCase().includes(searchTerm) || 
+            (novel.genre || "").toLowerCase().includes(searchTerm)
         );
 
         displayNovels(filtered);
@@ -189,7 +189,8 @@ function displayNovelDetail() {
 
         // Logika Penanda Bab Terakhir untuk tombol utama
         const lastChapterId = localStorage.getItem(`bookmark_${novel.id}`);
-        const startChapterId = lastChapterId || (novel.chapters.length > 0 ? novel.chapters[0].id : null);
+        const chapters = novel.chapters || [];
+        const startChapterId = lastChapterId || (chapters.length > 0 ? chapters[0].id : null);
         const readBtnText = lastChapterId ? 'Lanjutkan Membaca' : 'Mulai Membaca';
 
         detailContainer.innerHTML = `
@@ -237,7 +238,7 @@ function displayNovelDetail() {
             <div class="chapter-section">
                 <h3>Daftar Bab</h3>
                 <ul class="chapter-list">
-                    ${novel.chapters.map(ch => {
+                    ${chapters.map(ch => {
                         const isRead = readChapters.includes(ch.id);
                         return `
                             <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${ch.id}'">
@@ -272,15 +273,16 @@ function displayReadingContent() {
     const novel = novels.find(n => n.id === novelId);
     if (!novel) return;
 
-    const chapterIndex = novel.chapters.findIndex(ch => ch.id === chapterId);
-    const chapter = novel.chapters[chapterIndex];
+    const chapters = novel.chapters || [];
+    const chapterIndex = chapters.findIndex(ch => ch.id === chapterId);
+    const chapter = chapters[chapterIndex];
 
     if (chapter) {
-        const prevChapter = novel.chapters[chapterIndex - 1];
-        const nextChapter = novel.chapters[chapterIndex + 1];
+        const prevChapter = chapters[chapterIndex - 1];
+        const nextChapter = chapters[chapterIndex + 1];
 
         // Hitung estimasi waktu baca (asumsi rata-rata 200 kata per menit)
-        const wordCount = chapter.content.trim().split(/\s+/).length;
+        const wordCount = (chapter.content || "").trim().split(/\s+/).length;
         const readingTime = Math.ceil(wordCount / 200);
 
         // Simpan ke Riwayat Membaca
@@ -314,7 +316,7 @@ function displayReadingContent() {
                 <p class="reading-time"><i class="far fa-clock"></i> ${readingTime} menit membaca</p>
             </div>
             <div class="read-content">
-                ${chapter.content.split(/\r?\n/)
+                ${(chapter.content || "").split(/\r?\n/)
                     .filter(line => line.trim() !== "")
                     .map(p => `<p>${p.trim()}</p>`)
                     .join('')}
