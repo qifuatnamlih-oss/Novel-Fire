@@ -79,7 +79,7 @@
             </div>
             <hr>
             <form id="chapter-form">
-                <input type="hidden" id="ch-id">
+                <input type="hidden" id="ch-id"> <!-- ID bab yang sedang diedit -->
                 <div class="admin-form-group">
                     <label>Judul Bab</label>
                     <input type="text" id="ch-title" required placeholder="Contoh: Bab 5: Pertemuan Tak Terduga">
@@ -89,12 +89,17 @@
                     <textarea id="ch-content" rows="10" required placeholder="Tuliskan isi cerita di sini..."></textarea>
                 </div>
                 <button type="submit" id="ch-submit-btn" class="btn-admin btn-success">Tambah Bab</button>
+                <button type="button" id="ch-cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetChapterForm()">Batal</button>
             </form>
             <div id="chapter-admin-list" class="chapter-admin-list"></div>
         </div>
 
         <div class="admin-card">
             <h2><i class="fas fa-tasks"></i> Kelola Novel Kustom</h2>
+            <div class="admin-form-group" style="margin-bottom: 20px;">
+                <label for="novel-search">Cari Novel</label>
+                <input type="text" id="novel-search" placeholder="Cari berdasarkan judul atau kategori...">
+            </div>
             <div id="admin-novels-list">
                 <!-- Tabel novel kustom akan dimuat di sini -->
             </div>
@@ -253,6 +258,36 @@
             activeNovelIdForChapters = null;
         };
 
+        window.editChapter = function(chapterId) {
+            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            if (!novel) return;
+            
+            const chapter = novel.chapters.find(ch => ch.id === chapterId);
+            if (!chapter) return;
+
+            // Isi form dengan data bab
+            document.getElementById('ch-id').value = chapter.id;
+            document.getElementById('ch-title').value = chapter.title;
+            document.getElementById('ch-content').value = chapter.content;
+
+            // Ubah tampilan tombol
+            document.getElementById('ch-submit-btn').textContent = 'Perbarui Bab';
+            document.getElementById('ch-cancel-btn').style.display = 'inline-block';
+            
+            // Scroll ke form bab
+            window.scrollTo({ 
+                top: document.getElementById('chapter-form').offsetTop - 100, 
+                behavior: 'smooth' 
+            });
+        };
+
+        window.resetChapterForm = function() {
+            document.getElementById('chapter-form').reset();
+            document.getElementById('ch-id').value = '';
+            document.getElementById('ch-submit-btn').textContent = 'Tambah Bab';
+            document.getElementById('ch-cancel-btn').style.display = 'none';
+        };
+
         function renderChapterList(chapters) {
             const container = document.getElementById('chapter-admin-list');
             if (chapters.length === 0) {
@@ -263,6 +298,7 @@
                 <div class="chapter-admin-item">
                     <h4>${ch.title}</h4>
                     <div>
+                        <button onclick="editChapter(${ch.id})" class="btn-admin btn-success" style="padding: 5px 10px; margin-right: 5px;"><i class="fas fa-edit"></i></button>
                         <button onclick="deleteChapter(${ch.id})" class="btn-admin btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -274,19 +310,33 @@
             if (!activeNovelIdForChapters) return;
 
             const novel = novels.find(n => n.id === activeNovelIdForChapters);
-            const newChapter = {
-                id: Date.now(),
-                title: document.getElementById('ch-title').value,
-                content: document.getElementById('ch-content').value
-            };
+            const chId = document.getElementById('ch-id').value;
+            const chTitle = document.getElementById('ch-title').value;
+            const chContent = document.getElementById('ch-content').value;
+            
+            let updatedChapters;
 
-            const updatedChapters = [...(novel.chapters || []), newChapter];
-            const { error } = await supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+            if (chId) {
+                // Mode Edit: Cari dan perbarui bab yang ada
+                updatedChapters = novel.chapters.map(ch => 
+                    ch.id == chId ? { ...ch, title: chTitle, content: chContent } : ch
+                );
+            } else {
+                // Mode Tambah: Buat bab baru
+                const newChapter = {
+                    id: Date.now(),
+                    title: chTitle,
+                    content: chContent
+                };
+                updatedChapters = [...(novel.chapters || []), newChapter];
+            }
+
+            const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
 
             if (error) alert(error.message);
             else {
-                alert('Bab berhasil ditambahkan!');
-                document.getElementById('chapter-form').reset();
+                alert(chId ? 'Bab berhasil diperbarui!' : 'Bab berhasil ditambahkan!');
+                resetChapterForm();
                 await loadGlobalData();
                 renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
             }
@@ -304,11 +354,20 @@
             }
         };
 
-        function renderAdminNovels() {
+        function renderAdminNovels(filterTerm = '') {
             const listContainer = document.getElementById('admin-novels-list');
             
-            if (novels.length === 0) {
-                listContainer.innerHTML = '<p>Tidak ada novel di database.</p>';
+            const filteredNovels = filterTerm 
+                ? novels.filter(n => 
+                    n.title.toLowerCase().includes(filterTerm.toLowerCase()) || 
+                    n.category.toLowerCase().includes(filterTerm.toLowerCase())
+                  )
+                : novels;
+
+            if (filteredNovels.length === 0) {
+                listContainer.innerHTML = filterTerm 
+                    ? '<p>Tidak ada novel yang cocok dengan pencarian.</p>'
+                    : '<p>Tidak ada novel di database.</p>';
                 return;
             }
 
@@ -324,7 +383,7 @@
                     <tbody>
             `;
 
-            novels.forEach(n => {
+            filteredNovels.forEach(n => {
                 html += `
                     <tr>
                         <td data-label="Judul">${n.title}</td>
@@ -465,7 +524,7 @@
                 if (error) alert(error.message);
                 else {
                     await loadGlobalData();
-                    renderAdminNovels();
+                    renderAdminNovels(document.getElementById('novel-search')?.value);
                 }
             }
         }
@@ -534,7 +593,7 @@
 
             await loadGlobalData();
             resetForm();
-            renderAdminNovels();
+            renderAdminNovels(document.getElementById('novel-search')?.value);
             
             submitBtn.disabled = false;
             submitBtn.textContent = id ? 'Perbarui Novel' : 'Simpan ke Database';
@@ -549,6 +608,11 @@
             renderAdminNovels();
             renderCommentModeration(); // Panggil pertama kali tanpa filter
             renderBannedUsers();
+
+            // Event listener untuk filter novel
+            document.getElementById('novel-search')?.addEventListener('input', (e) => {
+                renderAdminNovels(e.target.value);
+            });
 
             // Event listener untuk filter komentar
             document.getElementById('comment-filter').addEventListener('input', (e) => {
