@@ -759,6 +759,42 @@ footer {
     .read-actions {
         justify-content: center; /* Pusatkan tombol di mobile */
     }
+
+    /* Responsive Table to Card */
+    .admin-table, .admin-table thead, .admin-table tbody, .admin-table th, .admin-table td, .admin-table tr {
+        display: block;
+    }
+    .admin-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    .admin-table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background: var(--white);
+    }
+    .admin-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 45% !important;
+        text-align: right;
+        min-height: 40px;
+    }
+    .admin-table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 40%;
+        text-align: left;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    .admin-actions {
+        justify-content: flex-end;
+    }
 }
 
 /* Font Size Classes */
