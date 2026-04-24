@@ -327,9 +327,9 @@
             novels.forEach(n => {
                 html += `
                     <tr>
-                        <td>${n.title}</td>
-                        <td>${n.category}</td>
-                        <td class="admin-actions">
+                        <td data-label="Judul">${n.title}</td>
+                        <td data-label="Kategori">${n.category}</td>
+                        <td data-label="Aksi" class="admin-actions">
                             <button onclick="editNovel(${n.id})" class="btn-admin btn-success" style="padding: 5px 10px;"><i class="fas fa-edit"></i></button>
                             <button onclick="openChapterManager(${n.id})" class="btn-admin" style="padding: 5px 10px; background: #3498db;" title="Kelola Bab"><i class="fas fa-book"></i></button>
                             <button onclick="deleteNovel(${n.id})" class="btn-admin btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
@@ -395,10 +395,10 @@
             paginatedComments.forEach(c => {
                 html += `
                     <tr>
-                        <td><small>${c.novelTitle}</small><br><strong>${c.chapterTitle}</strong></td>
-                        <td><strong>${c.name}</strong><br><small>${c.date}</small></td>
-                        <td>${c.text}</td>
-                        <td><button onclick="deleteCommentAdmin('${c.storageKey}', ${c.id})" class="btn-admin btn-danger">Hapus</button></td>
+                        <td data-label="Novel / Bab"><small>${c.novelTitle}</small><br><strong>${c.chapterTitle}</strong></td>
+                        <td data-label="User"><strong>${c.name}</strong><br><small>${c.date}</small></td>
+                        <td data-label="Komentar">${c.text}</td>
+                        <td data-label="Aksi"><button onclick="deleteCommentAdmin('${c.storageKey}', ${c.id})" class="btn-admin btn-danger">Hapus</button></td>
                     </tr>`;
             });
             html += '</tbody></table>';
