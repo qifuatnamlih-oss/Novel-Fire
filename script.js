@@ -637,11 +637,21 @@ function displayReadingContent() {
 
             <div class="comment-section">
                 <h3><i class="fas fa-comments"></i> Komentar</h3>
-                <form id="comment-form" class="comment-form">
-                    <input type="text" id="comment-name" placeholder="Nama Anda" required>
-                    <textarea id="comment-text" placeholder="Tulis komentar..." required></textarea>
-                    <button type="submit" class="btn-read">Kirim Komentar</button>
-                </form>
+                ${currentUser ? `
+                    <form id="comment-form" class="comment-form">
+                        <p style="font-size: 0.85rem; margin-bottom: 5px; opacity: 0.8;">Masuk sebagai: <strong>${currentUser.user_metadata?.full_name || currentUser.email}</strong></p>
+                        <input type="hidden" id="comment-name" value="${currentUser.user_metadata?.full_name || currentUser.email}">
+                        <textarea id="comment-text" placeholder="Tulis komentar..." required></textarea>
+                        <button type="submit" class="btn-read">Kirim Komentar</button>
+                    </form>
+                ` : `
+                    <div class="login-prompt" style="text-align: center; padding: 30px; background: var(--light-bg); border: 2px dashed var(--border-color); border-radius: 12px; margin-bottom: 25px;">
+                        <p style="margin-bottom: 15px; font-weight: 500;">Silakan login untuk memberikan komentar.</p>
+                        <button onclick="handleLogin()" class="btn-read" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fab fa-google"></i> Login / Gabung
+                        </button>
+                    </div>
+                `}
                 <div id="comment-list" class="comment-list">
                     <!-- Komentar akan dimuat di sini -->
                 </div>
@@ -803,7 +813,7 @@ async function setupComments(novelId, chapterId) {
     };
 
     // Event saat form dikirim
-    form.addEventListener('submit', async (e) => {
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameInput = document.getElementById('comment-name');
         const textInput = document.getElementById('comment-text');
@@ -1136,6 +1146,8 @@ function importData(jsonContent) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Cek sesi user saat halaman dimuat
+    await checkUserSession();
     // Muat data global terlebih dahulu
     await loadGlobalData();
 
