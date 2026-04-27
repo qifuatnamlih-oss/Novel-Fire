@@ -12,38 +12,34 @@ window.googleTranslateElementInit = function() {
 window.novels = window.novels || [];
 
 // Inisialisasi Supabase Client
-// Ganti dengan URL dan Anon Key proyek Supabase Anda
-window.SUPABASE_URL = 'SUPABASE_URL_PLACEHOLDER';
-window.SUPABASE_ANON_KEY = 'SUPABASE_KEY_PLACEHOLDER';
+// Objek konfigurasi yang akan di-update oleh GitHub Actions (sed)
+const SUPABASE_CONFIG = {
+    url: 'SUPABASE_URL_PLACEHOLDER',
+    key: 'SUPABASE_KEY_PLACEHOLDER'
+};
 
-// Cek apakah kita sedang berjalan secara lokal atau sudah di-deploy ke GitHub Pages
-// Jika URL masih placeholder, kita perlu memasukkan URL asli secara manual untuk testing lokal
-if (window.SUPABASE_URL === 'SUPABASE_URL_PLACEHOLDER' || !window.SUPABASE_URL) {
-    // Fallback untuk development lokal
-    const LOCAL_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-    const LOCAL_KEY = 'ISI_DENGAN_ANON_KEY_ASLI_ANDA_DI_SINI'; 
-    
-    window.SUPABASE_URL = LOCAL_URL;
-    window.SUPABASE_ANON_KEY = LOCAL_KEY;
+// Fallback otomatis untuk development lokal jika placeholder belum diganti
+if (SUPABASE_CONFIG.url === 'SUPABASE_URL_PLACEHOLDER') {
+    SUPABASE_CONFIG.url = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
+    SUPABASE_CONFIG.key = 'ISI_DENGAN_ANON_KEY_ASLI_ANDA_DI_SINI'; 
 }
 
-// Pastikan URL valid dan bukan placeholder sebelum inisialisasi
-if (window.supabase && typeof window.supabase.createClient === 'function' && 
-    window.SUPABASE_URL && window.SUPABASE_URL.startsWith('http') && 
-    window.SUPABASE_URL !== 'SUPABASE_URL_PLACEHOLDER') {
-    try {
-        window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+// Inisialisasi Supabase Client secara global
+try {
+    // Memastikan library Supabase dari CDN sudah siap
+    if (typeof supabase !== 'undefined') {
+        window.supabase = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key, {
             auth: {
                 persistSession: true,
                 autoRefreshToken: true,
                 detectSessionInUrl: true 
             }
         });
-    } catch (e) {
-        console.error("Gagal menginisialisasi Supabase:", e.message);
+    } else {
+        console.error("Supabase Error: Library CDN tidak ditemukan.");
     }
-} else {
-    console.error("Supabase Error: URL tidak valid atau Secret belum diatur di GitHub.");
+} catch (error) {
+    console.error("Gagal menginisialisasi Supabase Client:", error.message);
 }
 // Fungsi untuk memuat data dari data.json (Publik)
 async function loadGlobalData() {
