@@ -763,7 +763,7 @@ async function setupComments(novelId, chapterId) {
     // Fungsi untuk memuat komentar dari Supabase
     const loadComments = async () => {
         const currentUserIsAdmin = currentUser?.user_metadata?.role === 'admin';
-        const currentUserName = currentUser?.user_metadata?.full_name || currentUser?.email;
+        const currentUserId = currentUser?.id;
 
         const { data: comments, error } = await window.supabase
             .from('comments')
@@ -788,7 +788,7 @@ async function setupComments(novelId, chapterId) {
 
         commentList.innerHTML = parents.reverse().map(c => {
             const commentReplies = replies.filter(r => r.parent_id === c.id);
-            const isOwner = currentUserName === c.name;
+            const isOwner = currentUserId === c.user_id;
             const isAdminComment = c.role === 'admin'; // Memerlukan kolom 'role' di tabel comments
 
             return `
@@ -820,11 +820,13 @@ async function setupComments(novelId, chapterId) {
                         ${commentReplies.map(r => `
                             <div class="reply-item">
                                 <div class="comment-meta" style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="${r.profiles?.avatar_url || 'https://via.placeholder.com/30'}" style="width: 24px; height: 24px; border-radius: 50%;">
-                                    <strong>${r.profiles?.username || 'Anonim'}</strong> • <small>${new Date(r.created_at).toLocaleString('id-ID')}</small>
+                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=random" style="width: 24px; height: 24px; border-radius: 50%;">
+                                    <strong>${escapeHTML(r.name)}</strong> • <small>${new Date(r.created_at).toLocaleString('id-ID')}</small>
                                 </div>
                                 <p>${escapeHTML(r.text)}</p>
-                                <button class="btn-delete-comment" data-id="${r.id}" data-type="reply"><i class="fas fa-trash"></i> Hapus</button>
+                                ${(currentUserId === r.user_id || currentUserIsAdmin) ? `
+                                    <button class="btn-delete-comment" data-id="${r.id}" data-type="reply"><i class="fas fa-trash"></i> Hapus</button>
+                                ` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -850,9 +852,10 @@ async function setupComments(novelId, chapterId) {
         const { error } = await window.supabase.from('comments').insert([{
             novel_id: novelId,
             chapter_id: chapterId,
+            user_id: currentUser.id, // Menambahkan ID user untuk keamanan RLS
             name: nameInput.value,
                 text: textInput.value,
-                role: isAdmin ? 'admin' : 'user' // Menyimpan role saat komentar dibuat
+            role: isAdmin ? 'admin' : 'user'
         }]);
 
         if (error) alert("Gagal mengirim komentar: " + error.message);
@@ -879,14 +882,17 @@ async function setupComments(novelId, chapterId) {
             const formContainer = document.getElementById(`reply-form-${commentId}`);
             const nameIn = formContainer.querySelector('.reply-name');
             const textIn = formContainer.querySelector('.reply-text');
+            const isAdmin = currentUser?.user_metadata?.role === 'admin';
             if (!nameIn || !textIn || !nameIn.value || !textIn.value) return;
 
             const { error } = await window.supabase.from('comments').insert([{
                 novel_id: novelId,
                 chapter_id: chapterId,
+                user_id: currentUser.id,
                 name: nameIn.value,
                 text: textIn.value,
-                parent_id: commentId
+                parent_id: commentId,
+                role: isAdmin ? 'admin' : 'user'
             }]);
 
             if (error) alert("Gagal mengirim balasan: " + error.message);
