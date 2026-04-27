@@ -18,29 +18,33 @@ window.SUPABASE_ANON_KEY = 'SUPABASE_KEY_PLACEHOLDER';
 
 // Cek apakah kita sedang berjalan secara lokal atau sudah di-deploy ke GitHub Pages
 // Jika URL masih placeholder, kita perlu memasukkan URL asli secara manual untuk testing lokal
-if (window.SUPABASE_URL === 'SUPABASE_URL_PLACEHOLDER') {
-    // MASUKKAN URL DAN KEY ASLI ANDA DI SINI UNTUK TESTING LOKAL
-    // Jangan khawatir, saat di-push ke GitHub, sistem sed akan tetap bekerja.
-    window.SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Ganti dengan key asli Anda
+if (window.SUPABASE_URL === 'SUPABASE_URL_PLACEHOLDER' || !window.SUPABASE_URL) {
+    // Fallback untuk development lokal
+    const LOCAL_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
+    const LOCAL_KEY = 'ISI_DENGAN_ANON_KEY_ASLI_ANDA_DI_SINI'; 
+    
+    window.SUPABASE_URL = LOCAL_URL;
+    window.SUPABASE_ANON_KEY = LOCAL_KEY;
 }
 
-if (window.supabase && typeof window.supabase.createClient === 'function' && window.SUPABASE_URL.startsWith('http')) {
+// Pastikan URL valid dan bukan placeholder sebelum inisialisasi
+if (window.supabase && typeof window.supabase.createClient === 'function' && 
+    window.SUPABASE_URL && window.SUPABASE_URL.startsWith('http') && 
+    window.SUPABASE_URL !== 'SUPABASE_URL_PLACEHOLDER') {
     try {
         window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: true,
                 autoRefreshToken: true,
-                detectSessionInUrl: true
+                detectSessionInUrl: true 
             }
         });
     } catch (e) {
         console.error("Gagal menginisialisasi Supabase:", e.message);
     }
 } else {
-    console.warn("Supabase tidak diinisialisasi: URL atau Key tidak valid.");
+    console.error("Supabase Error: URL tidak valid atau Secret belum diatur di GitHub.");
 }
-
 // Fungsi untuk memuat data dari data.json (Publik)
 async function loadGlobalData() {
     try {
