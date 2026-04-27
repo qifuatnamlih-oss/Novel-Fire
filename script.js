@@ -10,25 +10,12 @@ window.googleTranslateElementInit = function() {
 
 // Data novel dalam bentuk Array of Objects
 window.novels = window.novels || [];
-
 // Inisialisasi Supabase Client
-// Objek konfigurasi yang akan di-update oleh GitHub Actions (sed)
 const SUPABASE_CONFIG = {
-    url: 'SUPABASE_URL_PLACEHOLDER',
-    key: 'SUPABASE_KEY_PLACEHOLDER'
+    url: 'https://lvfwgvzdididpkgkjzfz.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'
 };
 
-// Fallback otomatis untuk development lokal jika placeholder belum diganti
-// Fallback jika placeholder belum diganti (lokal) atau jika injeksi secret GitHub gagal/kosong
-if (
-    SUPABASE_CONFIG.url === 'SUPABASE_URL_PLACEHOLDER' || 
-    SUPABASE_CONFIG.key === 'SUPABASE_KEY_PLACEHOLDER' ||
-    !SUPABASE_CONFIG.url || 
-    !SUPABASE_CONFIG.key
-) {
-    SUPABASE_CONFIG.url = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-    SUPABASE_CONFIG.key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'; 
-}
 // Inisialisasi Supabase Client secara global
 try {
     // Memastikan library Supabase dari CDN sudah siap
