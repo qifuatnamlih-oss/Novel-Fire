@@ -187,7 +187,7 @@
             if (session) {
                 loginSection.style.display = 'none';
                 adminContent.style.display = 'block';
-                renderAdminNovels();
+                if (typeof novels !== 'undefined' && novels.length > 0) renderAdminNovels();
             } else {
                 loginSection.style.display = 'block';
                 adminContent.style.display = 'none';
@@ -382,7 +382,7 @@
             }
 
             let html = `
-                <table class="admin-table">
+                <table class="admin-table" style="width:100%">
                     <thead>
                         <tr>
                             <th>Judul</th>
@@ -619,10 +619,11 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Tunggu data dari Supabase dimuat sebelum render dashboard
             if (typeof loadGlobalData === 'function') {
-                await loadGlobalData();
+                const success = await loadGlobalData();
+                if (success) renderAdminNovels();
             }
             await checkSession();
-            renderAdminNovels();
+            
             renderCommentModeration(); // Panggil pertama kali tanpa filter
             renderBannedUsers();
 

@@ -188,13 +188,13 @@ function renderNovelCard(novel) {
     const targetUrl = `detail.html?id=${novel.id}`;
 
     return `
-        <div class="novel-card" onclick="location.href='${targetUrl}'" title="${novel.title}">
+        <div class="novel-card" onclick="location.href='${targetUrl}'" title="${escapeHTML(novel.title)}">
             <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
                 <i class="fas fa-heart"></i>
             </button>
             <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy">
-            <h3>${novel.title}</h3>
-            <p class="author-link" style="font-size: 0.8rem; color: var(--primary-color); margin: -5px 0 5px; cursor: pointer;" onclick="filterByAuthor('${(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
+            <h3>${escapeHTML(novel.title)}</h3>
+            <p class="author-link" style="font-size: 0.8rem; color: var(--primary-color); margin: -5px 0 5px; cursor: pointer;" onclick="filterByAuthor('${escapeHTML(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
                 ${novel.author || 'Anonim'}
             </p>
             <div class="rating">${stars}</div>
@@ -779,6 +779,7 @@ async function setupComments(novelId, chapterId) {
                 <button class="btn-delete-comment" data-id="${c.id}" data-type="parent"><i class="fas fa-trash"></i> Hapus</button>
                 <div class="reply-form-container" id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
                     <div class="comment-form" style="margin-bottom: 0;">
+                        <input type="text" class="reply-name" placeholder="Nama Anda" value="${currentUser?.user_metadata?.full_name || ''}" required>
                         <textarea class="reply-text" placeholder="Tulis balasan..." required style="height: 60px;"></textarea>
                         <button type="button" class="btn-submit-reply btn-read" data-id="${c.id}" style="padding: 8px 15px; font-size: 0.9rem;">Kirim</button>
                     </div>
@@ -798,7 +799,7 @@ async function setupComments(novelId, chapterId) {
                     </div>
                 ` : ''}
             </div>
-        `).join('');
+        `}).join('') || '';
     };
 
     // Event saat form dikirim
@@ -845,8 +846,7 @@ async function setupComments(novelId, chapterId) {
             const formContainer = document.getElementById(`reply-form-${commentId}`);
             const nameIn = formContainer.querySelector('.reply-name');
             const textIn = formContainer.querySelector('.reply-text');
-
-            if (!nameIn.value || !textIn.value) return;
+            if (!nameIn || !textIn || !nameIn.value || !textIn.value) return;
 
             const { error } = await window.supabase.from('comments').insert([{
                 novel_id: novelId,
@@ -1103,12 +1103,15 @@ function exportAllData() {
     };
     
     // Ambil semua kunci rating, bookmark, komentar, dan bab terbaca
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+    Object.keys(localStorage).forEach(key => {
         if (key.startsWith('rating_') || key.startsWith('bookmark_') || key.startsWith('comments_') || key.startsWith('read_chapters_')) {
-            data[key] = JSON.parse(localStorage.getItem(key));
+            try {
+                data[key] = JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+                data[key] = localStorage.getItem(key);
+            }
         }
-    }
+    });
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
