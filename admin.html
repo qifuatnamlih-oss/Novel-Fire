@@ -188,7 +188,9 @@
             const isAdmin = session?.user?.user_metadata?.role === 'admin';
 
             if (session && !isAdmin) {
-                alert("Akses Ditolak: Anda bukan administrator.");
+                // Jika bukan admin, jangan tampilkan alert yang mengganggu, 
+                // cukup arahkan kembali ke tempat asal atau home.
+                console.warn("Akses ditolak: User bukan admin.");
                 window.location.href = "index.html";
                 return;
             }

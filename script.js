@@ -84,9 +84,12 @@ function updateAuthUI() {
 }
 
 window.handleLogin = async function() {
+    // Mengambil URL bersih (tanpa simbol # hash) untuk redirect yang lebih stabil
+    const redirectUrl = window.location.origin + window.location.pathname + window.location.search;
+    
     const { error } = await window.supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.href }
+        options: { redirectTo: redirectUrl }
     });
     if (error) alert(error.message);
 };
