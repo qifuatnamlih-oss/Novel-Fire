@@ -33,6 +33,98 @@ try {
 } catch (error) {
     console.error("Gagal menginisialisasi Supabase Client:", error.message);
 }
+
+// --- LOGIKA AUTH & PROFIL ---
+let currentUser = null;
+
+async function checkUserSession() {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    currentUser = session ? session.user : null;
+    updateAuthUI();
+    if (currentUser) {
+        listenToNotifications();
+        fetchNotifications();
+    }
+}
+
+function updateAuthUI() {
+    const nav = document.getElementById('main-nav');
+    if (!nav) return;
+
+    let authBtn = document.getElementById('auth-nav-btn');
+    if (!authBtn) {
+        authBtn = document.createElement('div');
+        authBtn.id = 'auth-nav-btn';
+        authBtn.className = 'nav-translate';
+        nav.insertBefore(authBtn, document.getElementById('google_translate_element'));
+    }
+
+    if (currentUser) {
+        authBtn.innerHTML = `
+            <div class="user-profile-nav" onclick="toggleUserMenu()">
+                <img src="${currentUser.user_metadata.avatar_url || 'https://via.placeholder.com/30'}" class="nav-avatar">
+                <span class="notification-badge" id="noti-badge" style="display:none;"></span>
+            </div>
+            <div id="user-menu" class="user-menu-dropdown" style="display:none;">
+                <p>Halo, <strong>${currentUser.user_metadata.full_name || 'User'}</strong></p>
+                <hr>
+                <a href="#" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        `;
+    } else {
+        authBtn.innerHTML = `<button onclick="handleLogin()" class="btn-read" style="padding: 5px 15px; font-size: 0.8rem;">Login</button>`;
+    }
+}
+
+window.handleLogin = async function() {
+    const { error } = await window.supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.href }
+    });
+    if (error) alert(error.message);
+};
+
+window.handleLogout = async function(e) {
+    e.preventDefault();
+    await window.supabase.auth.signOut();
+    location.reload();
+};
+
+window.toggleUserMenu = () => {
+    const menu = document.getElementById('user-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+};
+
+// --- LOGIKA NOTIFIKASI REAL-TIME ---
+function listenToNotifications() {
+    window.supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications', 
+            filter: `receiver_id=eq.${currentUser.id}` 
+        }, payload => {
+            showNotificationToast("Seseorang membalas komentar Anda!");
+            fetchNotifications();
+        })
+        .subscribe();
+}
+
+async function fetchNotifications() {
+    const { data, count } = await window.supabase
+        .from('notifications')
+        .select('*', { count: 'exact' })
+        .eq('receiver_id', currentUser.id)
+        .eq('is_read', false);
+    
+    const badge = document.getElementById('noti-badge');
+    if (badge && count > 0) {
+        badge.innerText = count;
+        badge.style.display = 'block';
+    }
+}
+
 // Fungsi untuk memuat data dari data.json (Publik)
 async function loadGlobalData() {
     try {
@@ -647,39 +739,58 @@ function setupDarkMode() {
 }
 
 // Fungsi untuk mengelola Komentar
-function setupComments(novelId, chapterId) {
+async function setupComments(novelId, chapterId) {
     const form = document.getElementById('comment-form');
     const commentList = document.getElementById('comment-list');
-    const storageKey = `comments_${novelId}_${chapterId}`;
 
-    // Fungsi untuk memuat komentar dari localStorage
-    const loadComments = () => {
-        const comments = JSON.parse(localStorage.getItem(storageKey)) || [];
-        if (comments.length === 0) {
+    // Fungsi untuk memuat komentar dari Supabase
+    const loadComments = async () => {
+        const { data: comments, error } = await window.supabase
+            .from('comments')
+            .select('*, profiles(username, avatar_url)')
+            .eq('novel_id', novelId)
+            .eq('chapter_id', chapterId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error("Gagal memuat komentar:", error.message);
+            return;
+        }
+
+        if (!comments || comments.length === 0) {
             commentList.innerHTML = '<p class="no-comments">Belum ada komentar. Jadilah yang pertama!</p>';
             return;
         }
 
-        commentList.innerHTML = comments.map(c => `
+        // Kelompokkan komentar utama dan balasan
+        const parents = comments.filter(c => !c.parent_id);
+        const replies = comments.filter(c => c.parent_id);
+
+        commentList.innerHTML = parents.reverse().map(c => {
+            const commentReplies = replies.filter(r => r.parent_id === c.id);
+            return `
             <div class="comment-item">
-                <div class="comment-meta">
-                    <strong>${c.name}</strong> • <small>${c.date}</small>
+                <div class="comment-meta" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${c.profiles?.avatar_url || 'https://via.placeholder.com/40'}" style="width: 32px; height: 32px; border-radius: 50%;">
+                    <strong>${c.profiles?.username || 'Anonim'}</strong> • <small>${new Date(c.created_at).toLocaleString('id-ID')}</small>
                 </div>
                 <p>${escapeHTML(c.text)}</p>
                 <button class="btn-reply-toggle" data-id="${c.id}">Balas</button>
                 <button class="btn-delete-comment" data-id="${c.id}" data-type="parent"><i class="fas fa-trash"></i> Hapus</button>
                 <div class="reply-form-container" id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
                     <div class="comment-form" style="margin-bottom: 0;">
-                        <input type="text" class="reply-name" placeholder="Nama Anda" required>
                         <textarea class="reply-text" placeholder="Tulis balasan..." required style="height: 60px;"></textarea>
                         <button type="button" class="btn-submit-reply btn-read" data-id="${c.id}" style="padding: 8px 15px; font-size: 0.9rem;">Kirim</button>
                     </div>
                 </div>
-                ${c.replies && c.replies.length > 0 ? `
+                ${commentReplies.length > 0 ? `
                     <div class="reply-list">
-                        ${c.replies.map(r => `
+                        ${commentReplies.map(r => `
                             <div class="reply-item">
-                                <div class="comment-meta"><strong>${r.name}</strong> • <small>${r.date}</small></div>
+                                <div class="comment-meta" style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="${r.profiles?.avatar_url || 'https://via.placeholder.com/30'}" style="width: 24px; height: 24px; border-radius: 50%;">
+                                    <strong>${r.profiles?.username || 'Anonim'}</strong> • <small>${new Date(r.created_at).toLocaleString('id-ID')}</small>
+                                </div>
                                 <p>${escapeHTML(r.text)}</p>
                                 <button class="btn-delete-comment" data-id="${r.id}" data-type="reply"><i class="fas fa-trash"></i> Hapus</button>
                             </div>
@@ -687,11 +798,11 @@ function setupComments(novelId, chapterId) {
                     </div>
                 ` : ''}
             </div>
-        `).reverse().join('');
+        `).join('');
     };
 
     // Event saat form dikirim
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameInput = document.getElementById('comment-name');
         const textInput = document.getElementById('comment-text');
@@ -703,24 +814,22 @@ function setupComments(novelId, chapterId) {
             return;
         }
 
-        const newComment = {
-            id: Date.now(),
+        const { error } = await window.supabase.from('comments').insert([{
+            novel_id: novelId,
+            chapter_id: chapterId,
             name: nameInput.value,
-            text: textInput.value,
-            date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
-            replies: []
-        };
+            text: textInput.value
+        }]);
 
-        const comments = JSON.parse(localStorage.getItem(storageKey)) || [];
-        comments.push(newComment);
-        localStorage.setItem(storageKey, JSON.stringify(comments));
-
-        textInput.value = ''; // Reset teks saja, nama tetap tersimpan untuk kenyamanan
-        loadComments();
+        if (error) alert("Gagal mengirim komentar: " + error.message);
+        else {
+            textInput.value = ''; 
+            loadComments();
+        }
     });
 
     // Event delegation untuk tombol balas dan kirim balasan
-    commentList.addEventListener('click', (e) => {
+    commentList.addEventListener('click', async (e) => {
         const target = e.target;
 
         if (target.classList.contains('btn-reply-toggle')) {
@@ -739,43 +848,34 @@ function setupComments(novelId, chapterId) {
 
             if (!nameIn.value || !textIn.value) return;
 
-            const comments = JSON.parse(localStorage.getItem(storageKey)) || [];
-            const parentIndex = comments.findIndex(c => c.id === commentId);
+            const { error } = await window.supabase.from('comments').insert([{
+                novel_id: novelId,
+                chapter_id: chapterId,
+                name: nameIn.value,
+                text: textIn.value,
+                parent_id: commentId
+            }]);
 
-            if (parentIndex !== -1) {
-                if (!comments[parentIndex].replies) comments[parentIndex].replies = [];
-                comments[parentIndex].replies.push({
-                    id: Date.now(),
-                    name: nameIn.value,
-                    text: textIn.value,
-                    date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
-                });
-                localStorage.setItem(storageKey, JSON.stringify(comments));
-                loadComments();
-            }
+            if (error) alert("Gagal mengirim balasan: " + error.message);
+            else loadComments();
         }
 
         // Logika Hapus Komentar atau Balasan
         if (target.classList.contains('btn-delete-comment') || target.closest('.btn-delete-comment')) {
             const btn = target.classList.contains('btn-delete-comment') ? target : target.closest('.btn-delete-comment');
             const idToDelete = parseInt(btn.getAttribute('data-id'));
-            const type = btn.getAttribute('data-type');
 
             if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
-                let comments = JSON.parse(localStorage.getItem(storageKey)) || [];
+                const { error } = await window.supabase
+                    .from('comments')
+                    .delete()
+                    .eq('id', idToDelete);
 
-                if (type === 'parent') {
-                    // Hapus komentar utama beserta balasannya
-                    comments = comments.filter(c => c.id !== idToDelete);
+                if (error) {
+                    alert("Gagal menghapus komentar: " + error.message);
                 } else {
-                    // Hapus balasan spesifik di dalam komentar manapun
-                    comments.forEach(c => {
-                        if (c.replies) c.replies = c.replies.filter(r => r.id !== idToDelete);
-                    });
+                    loadComments();
                 }
-
-                localStorage.setItem(storageKey, JSON.stringify(comments));
-                loadComments();
             }
         }
     });

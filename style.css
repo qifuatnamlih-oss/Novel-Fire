@@ -1094,6 +1094,13 @@ footer {
         --reveal-delay: 0.15s;
     }
 
+    .read-container {
+        padding: 25px 15px; /* Mengurangi padding dari 50px 60px */
+        border-radius: 0; /* Membuat kontainer memenuhi lebar layar di HP */
+        width: 100%;
+        box-sizing: border-box;
+    }
+
     header { padding: 1rem 0; }
     header h1 { font-size: 1.5rem; }
 
@@ -1109,10 +1116,16 @@ footer {
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
+    .user-profile-nav {
+        justify-content: center;
+        margin: 10px 0;
+    }
+
     .nav-dark-mode {
-        right: 15px;
-        top: 10px;
+        position: static; /* Biarkan mengalir di dalam flexbox navigasi mobile */
+        transform: none;
         font-size: 1.1rem;
+        padding: 10px 0;
         z-index: 1001; /* Pastikan berada di atas elemen navigasi mobile lainnya */
     }
 
@@ -1120,6 +1133,7 @@ footer {
         flex-direction: column;
         padding: 0;
         position: sticky;
+        align-items: center;
         top: 0;
     }
 
@@ -1132,12 +1146,24 @@ footer {
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
+    nav .nav-translate, 
+    nav .nav-dark-mode,
+    nav #auth-nav-btn {
+        display: none; /* Sembunyikan elemen tambahan secara default */
+    }
+
     nav a:last-child {
         border-bottom: none;
     }
 
     nav.mobile-active a {
         display: block; /* Tampilkan menu saat tombol toggle diklik */
+    }
+
+    nav.mobile-active .nav-translate, 
+    nav.mobile-active .nav-dark-mode,
+    nav.mobile-active #auth-nav-btn {
+        display: flex; /* Tampilkan elemen tambahan saat menu aktif */
     }
 
     .container {
@@ -1161,13 +1187,38 @@ footer {
     }
 
     .novel-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* Tampilkan 2 kolom di HP */
         gap: 15px;
+        overflow-x: visible;
+    }
+
+    .novel-card {
+        width: auto; /* Biarkan mengikuti lebar grid */
     }
 
     .category-title {
         font-size: 1.3rem;
         margin: 25px 0 15px;
+    }
+
+    .detail-info div[style*="display: flex"] {
+        flex-direction: column; /* Menumpuk tombol baca dan favorit secara vertikal */
+        gap: 10px;
+    }
+
+    .btn-read, .btn-fav-detail {
+        width: 100%;
+        margin-left: 0 !important;
+    }
+
+    .read-navigation {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .read-navigation button {
+        width: 100%;
     }
 
     footer {
@@ -1241,3 +1292,51 @@ footer {
 .dark-mode .read-content.font-medium { font-size: var(--font-size-medium); }
 .dark-mode .read-content.font-large { font-size: var(--font-size-large); }
 .dark-mode .read-content.font-xlarge { font-size: var(--font-size-xlarge); }
+
+/* User Profile & Notification Styles */
+.nav-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--primary-color);
+}
+
+.user-profile-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    border: 2px solid var(--nav-bg);
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-strong);
+    min-width: 180px;
+    z-index: 2000;
+}
+
+.user-menu-dropdown a {
+    display: block;
+    color: var(--text-color);
+    padding: 8px 0;
+    text-decoration: none;
+}

@@ -411,32 +411,34 @@
             listContainer.innerHTML = html;
         }
 
-        function renderCommentModeration(filterTerm = '') {
+        async function renderCommentModeration(filterTerm = '') {
             const container = document.getElementById('comment-moderation-list');
             const paginationContainer = document.getElementById('comment-pagination');
             if (!container) return;
 
-            let allComments = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('comments_')) {
-                    const parts = key.split('_');
-                    const novelId = parseInt(parts[1]);
-                    const chapterId = parseInt(parts[2]);
-                    const novel = novels.find(n => n.id === novelId);
-                    const chapter = novel ? novel.chapters.find(c => c.id === chapterId) : null;
-                    const comments = JSON.parse(localStorage.getItem(key)) || [];
-
-                    comments.forEach(c => {
-                        allComments.push({
-                            novelTitle: novel ? novel.title : 'Novel Terhapus',
-                            chapterTitle: chapter ? chapter.title : `Bab ${chapterId}`,
-                            storageKey: key,
-                            ...c
-                        });
-                    });
-                }
+            let query = window.supabase.from('comments').select('*');
+            
+            if (filterTerm) {
+                query = query.or(`name.ilike.%${filterTerm}%,text.ilike.%${filterTerm}%`);
             }
+
+            const { data: comments, error } = await query.order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Gagal mengambil komentar:", error.message);
+                return;
+            }
+
+            let allComments = comments.map(c => {
+                const novel = novels.find(n => n.id === c.novel_id);
+                const chapter = novel ? novel.chapters.find(ch => ch.id === c.chapter_id) : null;
+                return {
+                    ...c,
+                    novelTitle: novel ? novel.title : 'Novel Terhapus',
+                    chapterTitle: chapter ? chapter.title : `Bab ${c.chapter_id}`,
+                    date: new Date(c.created_at).toLocaleString('id-ID')
+                };
+            });
 
             if (filterTerm) {
                 const term = filterTerm.toLowerCase();
@@ -467,7 +469,7 @@
                         <td data-label="Novel / Bab"><small>${c.novelTitle}</small><br><strong>${c.chapterTitle}</strong></td>
                         <td data-label="User"><strong>${c.name}</strong><br><small>${c.date}</small></td>
                         <td data-label="Komentar">${c.text}</td>
-                        <td data-label="Aksi"><button onclick="deleteCommentAdmin('${c.storageKey}', ${c.id})" class="btn-admin btn-danger">Hapus</button></td>
+                        <td data-label="Aksi"><button onclick="deleteCommentAdmin(${c.id})" class="btn-admin btn-danger">Hapus</button></td>
                     </tr>`;
             });
             html += '</tbody></table>';
@@ -495,13 +497,15 @@
             window.scrollTo({ top: document.getElementById('comment-moderation-list').offsetTop - 100, behavior: 'smooth' });
         }
 
-        window.deleteCommentAdmin = function(storageKey, commentId) {
+        window.deleteCommentAdmin = async function(commentId) {
             if (confirm('Hapus komentar ini?')) {
-                let comments = JSON.parse(localStorage.getItem(storageKey)) || [];
-                comments = comments.filter(c => c.id !== commentId);
-                if (comments.length === 0) localStorage.removeItem(storageKey);
-                else localStorage.setItem(storageKey, JSON.stringify(comments));
-                renderCommentModeration(document.getElementById('comment-filter').value);
+                const { error } = await window.supabase
+                    .from('comments')
+                    .delete()
+                    .eq('id', commentId);
+
+                if (error) alert("Gagal menghapus: " + error.message);
+                else renderCommentModeration(document.getElementById('comment-filter').value);
             }
         }
 
