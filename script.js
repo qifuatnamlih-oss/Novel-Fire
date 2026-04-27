@@ -56,7 +56,12 @@ function updateAuthUI() {
         authBtn = document.createElement('div');
         authBtn.id = 'auth-nav-btn';
         authBtn.className = 'nav-translate';
-        nav.insertBefore(authBtn, document.getElementById('google_translate_element'));
+        const translateElem = document.getElementById('google_translate_element');
+        if (translateElem && translateElem.parentNode === nav) {
+            nav.insertBefore(authBtn, translateElem);
+        } else {
+            nav.appendChild(authBtn);
+        }
     }
 
     if (currentUser) {
