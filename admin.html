@@ -189,7 +189,6 @@
 
             if (session && !isAdmin) {
                 alert("Akses Ditolak: Anda bukan administrator.");
-                await window.supabase.auth.signOut();
                 window.location.href = "index.html";
                 return;
             }
