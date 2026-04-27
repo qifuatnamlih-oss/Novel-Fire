@@ -65,6 +65,7 @@ function updateAuthUI() {
     }
 
     if (currentUser) {
+        const isAdmin = currentUser.user_metadata?.role === 'admin';
         authBtn.innerHTML = `
             <div class="user-profile-nav" onclick="toggleUserMenu()">
                 <img src="${currentUser.user_metadata.avatar_url || 'https://via.placeholder.com/30'}" class="nav-avatar">
@@ -73,6 +74,7 @@ function updateAuthUI() {
             <div id="user-menu" class="user-menu-dropdown" style="display:none;">
                 <p>Halo, <strong>${currentUser.user_metadata.full_name || 'User'}</strong></p>
                 <hr>
+                ${isAdmin ? '<a href="admin.html"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
                 <a href="#" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         `;

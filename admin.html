@@ -180,11 +180,21 @@
                 console.error("Supabase client belum diinisialisasi.");
                 return;
             }
-            const { data: { session } } = await window.supabase.auth.getSession();
+            const { data: { session }, error } = await window.supabase.auth.getSession();
             const loginSection = document.getElementById('login-section');
             const adminContent = document.getElementById('admin-content');
 
-            if (session) {
+            // Cek apakah user ada dan memiliki role admin di metadata
+            const isAdmin = session?.user?.user_metadata?.role === 'admin';
+
+            if (session && !isAdmin) {
+                alert("Akses Ditolak: Anda bukan administrator.");
+                await window.supabase.auth.signOut();
+                window.location.href = "index.html";
+                return;
+            }
+
+            if (session && isAdmin) {
                 loginSection.style.display = 'none';
                 adminContent.style.display = 'block';
                 if (typeof novels !== 'undefined' && novels.length > 0) renderAdminNovels();
