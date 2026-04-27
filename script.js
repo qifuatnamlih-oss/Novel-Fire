@@ -13,17 +13,32 @@ window.novels = window.novels || [];
 
 // Inisialisasi Supabase Client
 // Ganti dengan URL dan Anon Key proyek Supabase Anda
-window.SUPABASE_URL = 'SUPABASE_URL_PLACEHOLDER'; 
-window.SUPABASE_ANON_KEY = 'SUPABASE_KEY_PLACEHOLDER'; 
+window.SUPABASE_URL = 'SUPABASE_URL_PLACEHOLDER';
+window.SUPABASE_ANON_KEY = 'SUPABASE_KEY_PLACEHOLDER';
 
-if (window.supabase && typeof window.supabase.createClient === 'function') {
-    window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-        auth: {
-            persistSession: true, // Diaktifkan agar admin tidak perlu login ulang setiap refresh
-            autoRefreshToken: true,
-            detectSessionInUrl: true // WAJIB TRUE untuk fitur reset password
-        }
-    });
+// Cek apakah kita sedang berjalan secara lokal atau sudah di-deploy ke GitHub Pages
+// Jika URL masih placeholder, kita perlu memasukkan URL asli secara manual untuk testing lokal
+if (window.SUPABASE_URL === 'SUPABASE_URL_PLACEHOLDER') {
+    // MASUKKAN URL DAN KEY ASLI ANDA DI SINI UNTUK TESTING LOKAL
+    // Jangan khawatir, saat di-push ke GitHub, sistem sed akan tetap bekerja.
+    window.SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Ganti dengan key asli Anda
+}
+
+if (window.supabase && typeof window.supabase.createClient === 'function' && window.SUPABASE_URL.startsWith('http')) {
+    try {
+        window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
+    } catch (e) {
+        console.error("Gagal menginisialisasi Supabase:", e.message);
+    }
+} else {
+    console.warn("Supabase tidak diinisialisasi: URL atau Key tidak valid.");
 }
 
 // Fungsi untuk memuat data dari data.json (Publik)
