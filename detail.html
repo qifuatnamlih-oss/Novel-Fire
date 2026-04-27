@@ -10,11 +10,19 @@
 </head>
 <body>
     <header>
-        <h1><a href="index.html">NovelFire</a></h1>
+        <h1><a href="index.html">Novel<span>Fire</span></a></h1>
     </header>
 
-    <nav>
-        <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Kembali ke Beranda</a>
+    <nav id="main-nav">
+        <div class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i> Menu</div>
+        <a href="index.html" class="nav-link" data-category="all"><i class="fas fa-home"></i> Home</a>
+        <a href="#" class="nav-link" data-category="Korea"><i class="fas fa-globe-asia"></i> Korea</a>
+        <a href="#" class="nav-link" data-category="China"><i class="fas fa-scroll"></i> China</a>
+        <a href="#" class="nav-link" data-category="Jepang"><i class="fas fa-book-open"></i> Jepang</a>
+        <div id="google_translate_element" class="nav-translate"></div>
+        <button id="dark-mode-toggle" class="nav-dark-mode" title="Ganti Tema">
+            <i class="fas fa-moon"></i>
+        </button>
     </nav>
 
     <div class="container">
@@ -32,5 +40,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

@@ -1,10 +1,20 @@
+// Fungsi Inisialisasi Google Translate
+window.googleTranslateElementInit = function() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'id', // Bahasa asal website
+        includedLanguages: 'en,ko,zh-CN,ja,id', // Bahasa yang tersedia
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+    }, 'google_translate_element');
+}
+
 // Data novel dalam bentuk Array of Objects
 window.novels = window.novels || [];
 
 // Inisialisasi Supabase Client
 // Ganti dengan URL dan Anon Key proyek Supabase Anda
-window.SUPABASE_URL = 'https://lvfwgvzdididpkgkjzfz.supabase.co'; 
-window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'; 
+window.SUPABASE_URL = 'SUPABASE_URL_PLACEHOLDER'; 
+window.SUPABASE_ANON_KEY = 'SUPABASE_KEY_PLACEHOLDER'; 
 
 if (window.supabase && typeof window.supabase.createClient === 'function') {
     window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
@@ -54,6 +64,17 @@ function escapeHTML(str) {
     return p.innerHTML;
 }
 
+// Fungsi global untuk memfilter novel berdasarkan penulis
+window.filterByAuthor = function(authorName, event) {
+    if (event) event.stopPropagation(); // Mencegah klik kartu (redirect ke detail)
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = authorName;
+        searchInput.dispatchEvent(new Event('input')); // Memicu event input secara manual
+        window.scrollTo({ top: searchInput.offsetTop - 100, behavior: 'smooth' });
+    }
+};
+
 // Helper untuk merender HTML kartu novel
 function renderNovelCard(novel) {
     const rating = localStorage.getItem(`rating_${novel.id}`) || 0;
@@ -65,21 +86,20 @@ function renderNovelCard(novel) {
         stars += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
     }
 
-    // Cek apakah ada penanda bab terakhir
-    const lastChapterId = localStorage.getItem(`bookmark_${novel.id}`);
-    const targetUrl = lastChapterId 
-        ? `read.html?novelId=${novel.id}&chapterId=${lastChapterId}` 
-        : `detail.html?id=${novel.id}`;
+    const targetUrl = `detail.html?id=${novel.id}`;
 
     return `
-        <div class="novel-card" onclick="location.href='${targetUrl}'">
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)">
+        <div class="novel-card" onclick="location.href='${targetUrl}'" title="${novel.title}">
+            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
                 <i class="fas fa-heart"></i>
             </button>
-            <img src="${novel.image}" alt="${novel.title}">
+            <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy">
             <h3>${novel.title}</h3>
+            <p class="author-link" style="font-size: 0.8rem; color: var(--primary-color); margin: -5px 0 5px; cursor: pointer;" onclick="filterByAuthor('${(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
+                ${novel.author || 'Anonim'}
+            </p>
             <div class="rating">${stars}</div>
-            <p><strong>${novel.category}</strong> | ${novel.genre}</p>
+            <p style="font-size: 0.85rem; color: #888;"><strong>${novel.category}</strong> • ${novel.genre}</p>
         </div>
     `;
 }
@@ -97,6 +117,140 @@ function displayNovels(novelList) {
     }
     
     novelGrid.innerHTML = novelList.map(novel => renderNovelCard(novel)).join('');
+    setupGridScroll('novel-grid');
+}
+
+// Fungsi untuk menampilkan update bab terbaru dengan label NEW
+function displayLatestUpdates() {
+    const updateGrid = document.getElementById('latest-updates-grid');
+    const updateSection = document.getElementById('latest-updates-section');
+    if (!updateGrid || !updateSection) return;
+
+    let allUpdates = [];
+    novels.forEach(novel => {
+        if (novel.chapters && novel.chapters.length > 0) {
+            const lastChapter = novel.chapters[novel.chapters.length - 1];
+            allUpdates.push({
+                novelId: novel.id,
+                novelTitle: novel.title,
+                chapterId: lastChapter.id,
+                chapterTitle: lastChapter.title,
+                category: novel.category,
+                timestamp: lastChapter.id // ID bab baru menggunakan Date.now()
+            });
+        }
+    });
+
+    // Urutkan berdasarkan ID bab terbesar (terbaru)
+    allUpdates.sort((a, b) => b.timestamp - a.timestamp);
+
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000; // 24 jam dalam milidetik
+
+    if (allUpdates.length > 0) {
+        updateSection.style.display = 'block';
+        updateGrid.innerHTML = allUpdates.slice(0, 6).map(upd => {
+            // Tentukan apakah bab dirilis kurang dari 24 jam yang lalu
+            const isNew = (now - upd.timestamp) < oneDay;
+            const badgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
+
+            return `
+                <div class="update-item" onclick="location.href='read.html?novelId=${upd.novelId}&chapterId=${upd.chapterId}'" title="Baca ${upd.chapterTitle}">
+                    <div class="update-info">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="update-category">${upd.category}</span>
+                            ${badgeHtml}
+                        </div>
+                        <h4>${upd.novelTitle}</h4>
+                        <p>${upd.chapterTitle}</p>
+                    </div>
+                    <i class="fas fa-sync-alt" style="color: #eee;"></i>
+                </div>
+            `;
+        }).join('');
+    } else {
+        updateSection.style.display = 'none';
+    }
+}
+
+// Fungsi untuk menambahkan navigasi panah dan logika scroll horizontal
+function setupGridScroll(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+
+    let wrapper = grid.parentElement;
+    // Jika belum dibungkus wrapper khusus, buat pembungkusnya
+    if (!wrapper.classList.contains('grid-wrapper')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'grid-wrapper';
+        grid.parentNode.insertBefore(wrapper, grid);
+        wrapper.appendChild(grid);
+
+        const leftBtn = document.createElement('button');
+        leftBtn.className = 'scroll-arrow left hidden';
+        leftBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        
+        const rightBtn = document.createElement('button');
+        rightBtn.className = 'scroll-arrow right hidden';
+        rightBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+
+        wrapper.appendChild(leftBtn);
+        wrapper.appendChild(rightBtn);
+
+        let isBouncing = false;
+        const applyBounce = (direction) => {
+            if (isBouncing) return;
+            isBouncing = true;
+            grid.classList.add(`bounce-${direction}`);
+            setTimeout(() => {
+                grid.classList.remove(`bounce-${direction}`);
+                isBouncing = false;
+            }, 400);
+        };
+
+        leftBtn.onclick = () => {
+            if (grid.scrollLeft <= 5) {
+                applyBounce('left');
+            } else {
+                grid.scrollBy({ left: -300, behavior: 'smooth' });
+            }
+        };
+
+        rightBtn.onclick = () => {
+            if (grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 5) {
+                applyBounce('right');
+            } else {
+                grid.scrollBy({ left: 300, behavior: 'smooth' });
+            }
+        };
+
+        grid.addEventListener('scroll', () => {
+            const isLeft = grid.scrollLeft <= 5;
+            const isRight = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 5;
+            
+            leftBtn.classList.toggle('hidden', isLeft);
+            rightBtn.classList.toggle('hidden', isRight);
+            
+            wrapper.classList.toggle('left-edge', isLeft);
+            wrapper.classList.toggle('right-edge', isRight);
+        });
+    }
+
+    // Periksa visibilitas panah setelah konten dimuat (jeda sedikit untuk render)
+    setTimeout(() => {
+        const leftBtn = wrapper.querySelector('.scroll-arrow.left');
+        const rightBtn = wrapper.querySelector('.scroll-arrow.right');
+        if (leftBtn && rightBtn) {
+            const isLeft = grid.scrollLeft <= 5;
+            const isRight = grid.scrollWidth <= grid.clientWidth;
+            
+            leftBtn.classList.toggle('hidden', isLeft);
+            rightBtn.classList.toggle('hidden', isRight);
+            
+            wrapper.classList.toggle('left-edge', isLeft);
+            wrapper.classList.toggle('right-edge', isRight);
+        }
+    }, 100);
 }
 
 // Fungsi untuk menampilkan bagian Novel Favorit
@@ -111,6 +265,7 @@ function displayFavorites() {
     if (favoriteNovels.length > 0) {
         favSection.style.display = 'block';
         favGrid.innerHTML = favoriteNovels.map(novel => renderNovelCard(novel)).join('');
+        setupGridScroll('favorites-grid');
     } else {
         favSection.style.display = 'none';
     }
@@ -128,6 +283,7 @@ function displayHistory() {
     if (historyNovels.length > 0) {
         historySection.style.display = 'block';
         historyGrid.innerHTML = historyNovels.map(novel => renderNovelCard(novel)).join('');
+        setupGridScroll('history-grid');
     } else {
         historySection.style.display = 'none';
     }
@@ -142,14 +298,21 @@ function setupFilters() {
 
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
+            const category = link.getAttribute('data-category');
+            const novelGrid = document.getElementById('novel-grid');
+
+            // Jika tidak di halaman index (tidak ada grid), arahkan ke index dengan parameter kategori
+            if (!novelGrid) {
+                window.location.href = `index.html?category=${category}`;
+                return;
+            }
+
             e.preventDefault();
-            
+
             // Hapus kelas active dari semua link dan tambah ke yang diklik
             navLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
 
-            const category = link.getAttribute('data-category');
-            
             const filtered = category === 'all' 
                 ? novels 
                 : novels.filter(novel => novel.category === category);
@@ -183,10 +346,11 @@ function setupSearch() {
         navLinks.forEach(link => link.classList.remove('active'));
         document.querySelector('[data-category="all"]').classList.add('active');
 
-        // Filter berdasarkan judul atau genre
+        // Filter berdasarkan judul, genre, atau penulis
         const filtered = novels.filter(novel => 
             (novel.title || "").toLowerCase().includes(searchTerm) || 
-            (novel.genre || "").toLowerCase().includes(searchTerm)
+            (novel.genre || "").toLowerCase().includes(searchTerm) ||
+            (novel.author || "").toLowerCase().includes(searchTerm)
         );
 
         displayNovels(filtered);
@@ -218,11 +382,15 @@ function displayNovelDetail() {
                 <img src="${novel.image}" alt="${novel.title}">
                 <div class="detail-info">
                     <h1>${novel.title}</h1>
-                    <p class="tag"><strong>${novel.category}</strong></p>
-                    <p><strong>Genre:</strong> ${novel.genre}</p>
+                    <p style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); margin-top: -10px;">Penulis: ${novel.author || 'Anonim'}</p>
+                    <div style="margin: 10px 0;">
+                        <span class="tag">${novel.category}</span>
+                        <span style="margin-left: 10px; color: #888;">${novel.genre}</span>
+                    </div>
                     <div class="synopsis">
                         <h3>Sinopsis</h3>
-                        <p>${novel.description}</p>
+                        <p id="synopsis-content" class="synopsis-content">${novel.description}</p>
+                        <button id="read-more-btn" class="read-more-btn" style="display: none;">Baca Selengkapnya</button>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-read" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${startChapterId}'">
@@ -276,6 +444,20 @@ function displayNovelDetail() {
 
         // Setup interaksi rating
         setupRating(novelId);
+
+        // Setup tombol Baca Selengkapnya jika teks terlalu panjang
+        const synopsisContent = document.getElementById('synopsis-content');
+        const readMoreBtn = document.getElementById('read-more-btn');
+        if (synopsisContent && readMoreBtn) {
+            // Cek apakah konten benar-benar meluap (lebih dari 3 baris)
+            if (synopsisContent.scrollHeight > synopsisContent.offsetHeight) {
+                readMoreBtn.style.display = 'inline-block';
+            }
+            readMoreBtn.addEventListener('click', () => {
+                const isExpanded = synopsisContent.classList.toggle('expanded');
+                readMoreBtn.textContent = isExpanded ? 'Sembunyikan' : 'Baca Selengkapnya';
+            });
+        }
     } else {
         detailContainer.innerHTML = "<h2>Novel tidak ditemukan.</h2>";
     }
@@ -301,6 +483,12 @@ function displayReadingContent() {
         const prevChapter = chapters[chapterIndex - 1];
         const nextChapter = chapters[chapterIndex + 1];
 
+        const navButtons = `
+            ${prevChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${prevChapter.id}'" title="Bab Sebelumnya"><i class="fas fa-arrow-left"></i> Bab Sebelumnya</button>` : '<div></div>'}
+            <button onclick="location.href='detail.html?id=${novel.id}'" title="Daftar Bab"><i class="fas fa-list"></i> Daftar Bab</button>
+            ${nextChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${nextChapter.id}'" title="Bab Selanjutnya">Bab Selanjutnya <i class="fas fa-arrow-right"></i></button>` : '<div></div>'}
+        `;
+
         // Hitung estimasi waktu baca (asumsi rata-rata 200 kata per menit)
         const wordCount = (chapter.content || "").trim().split(/\s+/).length;
         const readingTime = Math.ceil(wordCount / 200);
@@ -320,20 +508,23 @@ function displayReadingContent() {
 
         readContainer.innerHTML = `
             <div class="read-header">
-                <div class="read-actions">
-                    <button id="font-size-decrease" class="btn-action" title="Perkecil Font">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button id="font-size-increase" class="btn-action" title="Perbesar Font">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <button id="dark-mode-toggle" class="btn-action" title="Ganti Tema">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                </div>
                 <h2>${novel.title}</h2>
                 <h3>${chapter.title}</h3>
                 <p class="reading-time"><i class="far fa-clock"></i> ${readingTime} menit membaca</p>
+            </div>
+            <div class="read-navigation top">
+                ${navButtons}
+            </div>
+            <div class="read-actions">
+                <button id="font-size-decrease" class="btn-action" title="Perkecil Font">
+                    <i class="fas fa-minus"></i> Font
+                </button>
+                <button id="font-size-increase" class="btn-action" title="Perbesar Font">
+                    <i class="fas fa-plus"></i> Font
+                </button>
+                <button id="dark-mode-toggle" class="btn-action" title="Ganti Tema">
+                    <i class="fas fa-moon"></i> Tema
+                </button>
             </div>
             <div class="read-content">
                 ${(chapter.content || "").split(/\r?\n/)
@@ -342,9 +533,7 @@ function displayReadingContent() {
                     .join('')}
             </div>
             <div class="read-navigation">
-                ${prevChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${prevChapter.id}'"><i class="fas fa-arrow-left"></i> Bab Sebelumnya</button>` : '<div></div>'}
-                <button onclick="location.href='detail.html?id=${novel.id}'"><i class="fas fa-list"></i> Daftar Bab</button>
-                ${nextChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${nextChapter.id}'">Bab Selanjutnya <i class="fas fa-arrow-right"></i></button>` : '<div></div>'}
+                ${navButtons}
             </div>
 
             <div class="comment-section">
@@ -372,24 +561,82 @@ function displayReadingContent() {
 
 // Fungsi untuk mengelola Dark Mode
 function setupDarkMode() {
-    const toggleBtn = document.getElementById('dark-mode-toggle');
+    const toggleBtns = document.querySelectorAll('#dark-mode-toggle');
     // Cek di body atau localStorage
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
     }
 
-    if (!toggleBtn) return;
+    if (toggleBtns.length === 0) return;
 
-    const icon = toggleBtn.querySelector('i');
-    if (document.body.classList.contains('dark-mode') && icon) {
-        icon.className = 'fas fa-sun';
-    }
+    toggleBtns.forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (document.body.classList.contains('dark-mode') && icon) {
+            icon.className = 'fas fa-sun';
+        }
+    });
 
-    toggleBtn.addEventListener('click', () => {
+    // Fungsi untuk membuat efek partikel cahaya
+    const createParticles = (x, y, isToLight) => {
+        const count = 12; // Jumlah partikel
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'theme-particle';
+            
+            // Efek Biru Es jika berpindah ke mode siang (dingin)
+            if (isToLight) {
+                particle.style.background = '#a5f3fc';
+                particle.style.boxShadow = '0 0 10px #a5f3fc';
+            }
+
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            
+            // Arah ledakan acak
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 50 + Math.random() * 80;
+            particle.style.setProperty('--dx', Math.cos(angle) * velocity + 'px');
+            particle.style.setProperty('--dy', Math.sin(angle) * velocity + 'px');
+            
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 1000);
+        }
+    };
+
+    const handleToggle = (e) => {
+        const btn = e.currentTarget;
+        // Tangkap posisi tengah tombol untuk titik pusat gradasi/penyebaran
+        const rect = btn.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        document.documentElement.style.setProperty('--click-x', x + 'px');
+        document.documentElement.style.setProperty('--click-y', y + 'px');
+
+        // Tentukan apakah kita akan berpindah ke mode terang (saat ini masih di mode gelap)
+        const isToLight = document.body.classList.contains('dark-mode');
+
+        // Munculkan partikel
+        createParticles(x, y, isToLight);
+
+        // Tambahkan animasi putar
+        toggleBtns.forEach(b => {
+            const icon = b.querySelector('i');
+            if (icon) {
+                icon.classList.add('rotate-icon');
+                setTimeout(() => icon.classList.remove('rotate-icon'), 500);
+            }
+        });
+
         const isDark = document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-    });
+        
+        // Sinkronkan semua ikon dark mode di halaman
+        document.querySelectorAll('#dark-mode-toggle i').forEach(i => {
+            i.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
+    };
+
+    toggleBtns.forEach(btn => btn.addEventListener('click', handleToggle));
 }
 
 // Fungsi untuk mengelola Komentar
@@ -785,10 +1032,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupDarkMode(); // Harus dipanggil paling awal untuk kenyamanan visual
 
     if (document.getElementById('novel-grid')) {
-        displayNovels(novels);
+        // Cek apakah ada parameter kategori di URL
+        const params = new URLSearchParams(window.location.search);
+        const catParam = params.get('category') || 'all';
+
+        // Set status active pada nav sesuai parameter
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.toggle('active', l.getAttribute('data-category') === catParam);
+        });
+
+        const filteredNovels = catParam === 'all' 
+            ? novels 
+            : novels.filter(n => n.category === catParam);
+
+        displayNovels(filteredNovels);
         displayFavorites();
         displayHistory();
-        setupFilters();
+        displayLatestUpdates();
         setupSearch();
     }
     if (document.getElementById('novel-detail')) {
@@ -797,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('read-container')) {
         displayReadingContent();
     }
+    setupFilters(); // Panggil di semua halaman agar navigasi berfungsi
     setupMobileMenu();
     setupSmartNav();
     setupBackToTop();

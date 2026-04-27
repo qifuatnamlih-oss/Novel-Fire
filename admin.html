@@ -11,12 +11,16 @@
 </head>
 <body>
     <header>
-        <h1><a href="index.html">NovelFire Admin</a></h1>
+        <div style="position: absolute; right: 20px; top: 10px;">
+            <div id="google_translate_element"></div>
+        </div>
+        <h1><a href="index.html">Novel<span>Fire</span> Admin</a></h1>
     </header>
 
     <div class="container" id="login-section">
-        <div class="admin-card" style="max-width: 400px; margin: 50px auto;">
-            <h2><i class="fas fa-lock"></i> Admin Login</h2>
+        <div class="admin-card" style="max-width: 400px; margin: 80px auto; border-top: 5px solid var(--primary-color);">
+            <h2 style="text-align: center;"><i class="fas fa-user-shield"></i> NovelFire Admin</h2>
+            <p style="text-align: center; color: #888; margin-bottom: 25px;">Masukkan kredensial Anda untuk mengelola konten.</p>
             <form id="login-form">
                 <div class="admin-form-group">
                     <label>Email Admin</label>
@@ -38,6 +42,7 @@
         </div>
         <div class="admin-card">
             <h2 id="form-title"><i class="fas fa-plus-circle"></i> Tambah Novel Baru</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Isi data di bawah ini untuk menambahkan novel ke dalam database global Supabase.</p>
             <form id="add-novel-form">
                 <input type="hidden" id="adm-id">
                 <div class="admin-form-group">
@@ -55,6 +60,10 @@
                 <div class="admin-form-group">
                     <label>Genre (Pisahkan dengan koma)</label>
                     <input type="text" id="adm-genre" placeholder="Fantasy, Action">
+                </div>
+                <div class="admin-form-group">
+                    <label>Penulis</label>
+                    <input type="text" id="adm-author" placeholder="Nama Penulis">
                 </div>
                 <div class="admin-form-group">
                     <label>URL Gambar Cover</label>
@@ -162,6 +171,7 @@
         </div>
     </div>
 
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script src="script.js"></script>
     <script>
         // --- SISTEM OTENTIKASI SUPABASE ---
@@ -501,6 +511,7 @@
 
             document.getElementById('adm-id').value = novel.id;
             document.getElementById('adm-title').value = novel.title;
+            document.getElementById('adm-author').value = novel.author || '';
             document.getElementById('adm-category').value = novel.category;
             document.getElementById('adm-genre').value = novel.genre;
             
@@ -532,6 +543,7 @@
         window.resetForm = function() {
             form.reset();
             document.getElementById('adm-id').value = '';
+            document.getElementById('adm-author').value = '';
             document.getElementById('adm-image-url-hidden').value = '';
             document.getElementById('image-preview').src = "https://via.placeholder.com/150x200";
             formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Novel Baru';
@@ -572,6 +584,7 @@
             
             const novelData = {
                 title: document.getElementById('adm-title').value,
+                author: document.getElementById('adm-author').value,
                 category: document.getElementById('adm-category').value,
                 genre: document.getElementById('adm-genre').value,
                 image: imageUrl,
