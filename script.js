@@ -38,12 +38,28 @@ try {
 let currentUser = null;
 
 async function checkUserSession() {
-    const { data: { session } } = await window.supabase.auth.getSession();
-    currentUser = session ? session.user : null;
-    updateAuthUI();
-    if (currentUser) {
-        listenToNotifications();
-        fetchNotifications();
+    try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        
+        if (error) {
+            // Jika terjadi error pada token (seperti Invalid Refresh Token), 
+            // paksa sign out untuk membersihkan storage yang rusak.
+            console.warn("Sesi tidak valid, membersihkan data login...");
+            await window.supabase.auth.signOut();
+            currentUser = null;
+        } else {
+            currentUser = session ? session.user : null;
+        }
+
+        updateAuthUI();
+        if (currentUser) {
+            listenToNotifications();
+            fetchNotifications();
+        }
+    } catch (err) {
+        console.error("Gagal memproses sesi:", err.message);
+        currentUser = null;
+        updateAuthUI();
     }
 }
 
@@ -84,8 +100,8 @@ function updateAuthUI() {
 }
 
 window.handleLogin = async function() {
-    // Mengambil URL bersih (tanpa simbol # hash) untuk redirect yang lebih stabil
-    const redirectUrl = window.location.origin + window.location.pathname + window.location.search;
+    // Gunakan URL absolut tanpa fragment/hash untuk redirect yang lebih kompatibel dengan Supabase
+    const redirectUrl = window.location.origin + window.location.pathname;
     
     const { error } = await window.supabase.auth.signInWithOAuth({
         provider: 'google',
