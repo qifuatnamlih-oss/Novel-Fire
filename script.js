@@ -685,11 +685,31 @@ async function displayReadingContent() {
                 <button id="dark-mode-toggle" class="btn-action" title="Ganti Tema">
                     <i class="fas fa-moon"></i> Tema
                 </button>
+                <div class="tts-controls">
+                    <select id="tts-voice-select" class="btn-action" title="Pilih Suara" style="max-width: 120px; margin-right: 5px; display: none;"></select>
+                    <select id="tts-speed-select" class="btn-action" title="Kecepatan Baca">
+                        <option value="0.75">0.75x</option>
+                        <option value="1.0" selected>1.0x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2.0">2.0x</option>
+                    </select>
+                    <select id="tts-sleep-timer" class="btn-action" title="Sleep Timer" style="margin-left: 5px;">
+                        <option value="0" selected>⏱️ Off</option>
+                        <option value="5">5 Min</option>
+                        <option value="15">15 Min</option>
+                        <option value="30">30 Min</option>
+                        <option value="60">60 Min</option>
+                    </select>
+                </div>
+                <button id="tts-toggle" class="btn-action" title="Dengarkan Novel">
+                    <i class="fas fa-play"></i> Audio
+                </button>
             </div>
             <div class="read-content">
                 ${(chapter.content || "").split(/\r?\n/)
                     .filter(line => line.trim() !== "")
-                    .map(p => `<p>${p.trim()}</p>`)
+                    .map((p, index) => `<p data-paragraph-index="${index}">${p.trim()}</p>`)
                     .join('')}
             </div>
             <div class="read-navigation">
@@ -723,6 +743,7 @@ async function displayReadingContent() {
         document.title = `${chapter.title} - ${novel.title}`;
         setupFontSizeControl(); // Panggil setelah konten dimuat
         setupReadingProgress(); // Inisialisasi progres membaca
+        setupTTS(); // Inisialisasi fitur Text to Speech
         setupComments(novelId, chapterId); // Inisialisasi fitur komentar
     } else {
         readContainer.innerHTML = "<h2>Bab tidak ditemukan.</h2>";

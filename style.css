@@ -750,9 +750,51 @@ body.dark-mode .scroll-arrow:hover {
 }
 .btn-action:hover { background: var(--primary-color); color: white; }
 
+/* TTS Controls */
+.tts-controls {
+    display: flex;
+    align-items: center;
+}
+
+#tts-voice-select {
+    font-size: 0.8rem;
+    padding: 8px;
+}
+
+#tts-sleep-timer {
+    background: var(--white);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+#tts-speed-select {
+    background: var(--white);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+/* TTS Active State */
+.btn-action#tts-toggle.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
 .read-content { font-size: 1.25rem; line-height: 1.8; color: #2c3e50; text-align: left; }
 .dark-mode .read-content { color: #e2e8f0; }
 .read-content p { margin-bottom: 20px; }
+
+/* Highlighted paragraph for TTS */
+.read-content p.highlight {
+    background-color: rgba(255, 255, 0, 0.3); /* Soft yellow highlight */
+    transition: background-color 0.3s ease;
+}
+
+body.dark-mode .read-content p.highlight {
+    background-color: rgba(100, 100, 0, 0.5); /* Darker highlight for dark mode */
+}
 
 .read-navigation {
     display: flex;

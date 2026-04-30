@@ -104,8 +104,19 @@
             <div style="margin-top: 20px; padding: 15px; border: 2px dashed var(--border-color); border-radius: 8px;">
                 <h4 style="margin-top: 0;"><i class="fas fa-file-import"></i> Upload Bab Masal (.txt)</h4>
                 <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Gunakan format <code>### Judul Bab</code> di awal setiap bab dalam satu file .txt.</p>
-                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem;">
-                <button onclick="handleBulkChapterUpload()" class="btn-admin" style="background: #673ab7; margin-top: 10px; width: 100%;">Proses Upload Masal</button>
+                <div class="admin-form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <input type="checkbox" id="ai-refine-toggle" style="width: auto;">
+                    <label for="ai-refine-toggle" style="font-size: 0.85rem; margin-bottom: 0;">Gunakan AI untuk perbaiki Bahasa Indonesia & Gaya Bahasa</label>
+                </div>
+                <div class="admin-form-group">
+                    <label style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
+                    <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh NovelFire Team. Selamat membaca!" style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
+                </div>
+                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;">
+                <div id="bulk-upload-status" style="margin-bottom: 10px; text-align: center; font-style: italic; color: #888; display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Memuat...
+                </div>
+                <button onclick="handleBulkChapterUpload()" id="bulk-upload-btn" class="btn-admin" style="background: #673ab7; margin-top: 10px; width: 100%;">Proses Upload Masal</button>
             </div>
 
             <div id="chapter-admin-list" class="chapter-admin-list"></div>
@@ -289,49 +300,108 @@
 
         // --- LOGIKA UPLOAD BAB MASAL ---
         window.handleBulkChapterUpload = async function() {
+            const bulkUploadBtn = document.getElementById('bulk-upload-btn');
             const fileInput = document.getElementById('bulk-chapter-file');
             const file = fileInput.files[0];
+            const statusDiv = document.getElementById('bulk-upload-status');
+            const statusIcon = statusDiv.querySelector('.fa-spinner');
+
+            // Tampilkan status dan nonaktifkan tombol
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai proses...';
+            bulkUploadBtn.disabled = true;
             
             if (!file || !activeNovelIdForChapters) {
                 alert("Silakan pilih file .txt terlebih dahulu.");
+                // Reset status dan aktifkan tombol
+                statusDiv.style.display = 'none';
+                bulkUploadBtn.disabled = false;
                 return;
             }
 
             const text = await file.text();
+
+            // Validasi format: Memastikan ada setidaknya satu tag '### '
+            const hasValidFormat = /^###\s+/m.test(text);
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memvalidasi format file...';
+            if (!hasValidFormat) {
+                alert("Format file tidak valid! Pastikan file menggunakan format '### Judul Bab' sebagai pemisah antar bab.");
+                statusDiv.style.display = 'none';
+                bulkUploadBtn.disabled = false;
+                return;
+            }
+
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menganalisis bab...';
+
+            // Logika pendeteksian jumlah bab
             // Memecah teks berdasarkan pemisah ###
             const segments = text.split(/###\s+/).filter(s => s.trim() !== "");
             
+            const customNote = document.getElementById('bulk-custom-note').value.trim();
+            const notePrefix = customNote ? `Catatan Penerjemah: ${customNote}\n\n` : '';
+            const useAI = document.getElementById('ai-refine-toggle').checked;
+            
             const baseId = Date.now();
-            const newChapters = segments.map((segment, index) => {
-                const lines = segment.split('\n');
-                const title = lines[0].trim();
-                const content = lines.slice(1).join('\n').trim();
-                return {
-                    id: baseId + index,
-                    title: title || `Bab Tanpa Judul ${index + 1}`,
-                    content: content
-                };
-            });
+            const newChapters = [];
 
+            for (let i = 0; i < segments.length; i++) {
+                statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses Bab ${i+1}/${segments.length}...`;
+                
+                const lines = segments[i].split('\n');
+                const title = lines[0].trim();
+                let content = lines.slice(1).join('\n').trim();
+
+                // Jika AI Aktif, kirim ke serverless function
+                if (useAI) {
+                    try {
+                        const aiRes = await fetch('/api/refine-content', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content })
+                        });
+                        const aiData = await aiRes.json();
+                        if (aiData.refinedContent) content = aiData.refinedContent;
+                    } catch (e) { console.error("AI Refine gagal untuk bab ini", e); }
+                }
+
+                newChapters.push({
+                    id: baseId + i,
+                    title: title || `Bab Tanpa Judul ${i + 1}`,
+                    content: notePrefix + content
+                });
+            }
+
+            // Logika pendeteksian jumlah bab
             if (newChapters.length === 0) {
                 alert("Format tidak dikenali. Pastikan file menggunakan '### Judul' sebagai pemisah.");
+                statusDiv.style.display = 'none';
+                bulkUploadBtn.disabled = false;
                 return;
             }
 
             if (confirm(`Ditemukan ${newChapters.length} bab. Tambahkan ke novel ini?`)) {
+                statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengunggah bab ke database...';
                 const novel = novels.find(n => n.id === activeNovelIdForChapters);
                 const updatedChapters = [...(novel.chapters || []), ...newChapters];
                 
                 const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
                 
-                if (error) alert(error.message);
-                else {
-                    alert('Upload masal berhasil!');
+                if (error) {
+                    alert("Gagal mengunggah bab: " + error.message);
+                    statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Gagal!';
+                } else {
+                    alert('Upload masal berhasil!'); // Alert tetap untuk konfirmasi user
                     fileInput.value = '';
                     await loadGlobalData();
                     renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
+                    statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Selesai!';
                 }
+            } else {
+                statusDiv.innerHTML = '<i class="fas fa-info-circle"></i> Upload dibatalkan.';
             }
+            // Aktifkan tombol kembali dan sembunyikan status setelah beberapa saat
+            bulkUploadBtn.disabled = false;
+            setTimeout(() => { statusDiv.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
         };
 
         window.editChapter = function(chapterId) {
