@@ -1,6 +1,6 @@
 # NovelFire 🔥
 
-NovelFire adalah platform web sederhana untuk membaca novel (Korea, China, dan Jepang) yang dibangun dengan HTML, CSS, dan JavaScript vanilla, serta menggunakan **Supabase** sebagai backend database dan autentikasi.
+NovelFire adalah platform web sederhana untuk membaca Fanfiction dan Novel (China, dan Jepang) yang dibangun dengan HTML, CSS, dan JavaScript vanilla, serta menggunakan **Supabase** sebagai backend database dan autentikasi.
 
 ## Fitur Utama
 - **Koleksi Novel:** Filter berdasarkan kategori negara dan penulis.

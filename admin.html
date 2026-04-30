@@ -52,9 +52,9 @@
                 <div class="admin-form-group">
                     <label>Kategori</label>
                     <select id="adm-category">
-                        <option value="Korea">Korea</option>
                         <option value="China">China</option>
                         <option value="Jepang">Jepang</option>
+                        <option value="Fanfiction">Fanfiction</option>
                     </select>
                 </div>
                 <div class="admin-form-group">
@@ -76,7 +76,7 @@
                 </div>
                 <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database Lokal</button>
                 <button type="button" id="cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetForm()">Batal</button>
-                <img id="image-preview" src="https://via.placeholder.com/150x200" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;">
+                <img id="image-preview" src="https://via.placeholder.com/150x200" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;" loading="lazy">
             </form>
         </div>
 
@@ -100,6 +100,14 @@
                 <button type="submit" id="ch-submit-btn" class="btn-admin btn-success">Tambah Bab</button>
                 <button type="button" id="ch-cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetChapterForm()">Batal</button>
             </form>
+            
+            <div style="margin-top: 20px; padding: 15px; border: 2px dashed var(--border-color); border-radius: 8px;">
+                <h4 style="margin-top: 0;"><i class="fas fa-file-import"></i> Upload Bab Masal (.txt)</h4>
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Gunakan format <code>### Judul Bab</code> di awal setiap bab dalam satu file .txt.</p>
+                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem;">
+                <button onclick="handleBulkChapterUpload()" class="btn-admin" style="background: #673ab7; margin-top: 10px; width: 100%;">Proses Upload Masal</button>
+            </div>
+
             <div id="chapter-admin-list" class="chapter-admin-list"></div>
         </div>
 
@@ -277,6 +285,53 @@
         window.closeChapterManager = function() {
             document.getElementById('chapter-manager-card').style.display = 'none';
             activeNovelIdForChapters = null;
+        };
+
+        // --- LOGIKA UPLOAD BAB MASAL ---
+        window.handleBulkChapterUpload = async function() {
+            const fileInput = document.getElementById('bulk-chapter-file');
+            const file = fileInput.files[0];
+            
+            if (!file || !activeNovelIdForChapters) {
+                alert("Silakan pilih file .txt terlebih dahulu.");
+                return;
+            }
+
+            const text = await file.text();
+            // Memecah teks berdasarkan pemisah ###
+            const segments = text.split(/###\s+/).filter(s => s.trim() !== "");
+            
+            const baseId = Date.now();
+            const newChapters = segments.map((segment, index) => {
+                const lines = segment.split('\n');
+                const title = lines[0].trim();
+                const content = lines.slice(1).join('\n').trim();
+                return {
+                    id: baseId + index,
+                    title: title || `Bab Tanpa Judul ${index + 1}`,
+                    content: content
+                };
+            });
+
+            if (newChapters.length === 0) {
+                alert("Format tidak dikenali. Pastikan file menggunakan '### Judul' sebagai pemisah.");
+                return;
+            }
+
+            if (confirm(`Ditemukan ${newChapters.length} bab. Tambahkan ke novel ini?`)) {
+                const novel = novels.find(n => n.id === activeNovelIdForChapters);
+                const updatedChapters = [...(novel.chapters || []), ...newChapters];
+                
+                const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+                
+                if (error) alert(error.message);
+                else {
+                    alert('Upload masal berhasil!');
+                    fileInput.value = '';
+                    await loadGlobalData();
+                    renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
+                }
+            }
         };
 
         window.editChapter = function(chapterId) {

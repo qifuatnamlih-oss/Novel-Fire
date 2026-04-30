@@ -2,7 +2,7 @@
 window.googleTranslateElementInit = function() {
     new google.translate.TranslateElement({
         pageLanguage: 'id', // Bahasa asal website
-        includedLanguages: 'en,ko,zh-CN,ja,id', // Bahasa yang tersedia
+        includedLanguages: 'en,zh-CN,ja,id', // Menghapus bahasa Korea dari daftar terjemahan
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
         autoDisplay: false
     }, 'google_translate_element');
@@ -152,29 +152,69 @@ async function fetchNotifications() {
 }
 
 // Fungsi untuk memuat data dari data.json (Publik)
-async function loadGlobalData() {
+/**
+ * Memuat data novel secara efisien dengan pemilihan kolom dan paginasi.
+ */
+async function loadGlobalData(options = {}) {
     try {
-        if (!window.supabase || typeof window.supabase.from !== 'function') {
-            console.warn("Supabase client belum siap atau gagal dimuat.");
-            return false;
-        }
+        if (!window.supabase) return false;
+
+        // Default: ambil metadata saja (tanpa chapters/description yang berat)
+        const { 
+            page = 0, 
+            limit = 12, 
+            select = 'id, title, category, genre, image, author' 
+        } = options;
+
+        const from = page * limit;
+        const to = from + limit - 1;
 
         const { data, error } = await window.supabase
-            .from('novels') // Nama tabel novel Anda di Supabase
-            .select('*'); // Ambil semua kolom
+            .from('novels')
+            .select(select)
+            .range(from, to)
+            .order('id', { ascending: false });
         
-        if (error) {
-            console.error("Error fetching novels from Supabase:", error.message);
-            return false;
-        }
+        if (error) throw error;
         
-        novels = data || [];
-        console.log("Data novel berhasil dimuat dari Supabase Global:", novels);
-        return true; // Berhasil memuat data
+        // Gabungkan dengan data lokal tanpa duplikasi
+        const existingIds = new Set(window.novels.map(n => n.id));
+        const newItems = (data || []).filter(item => !existingIds.has(item.id));
+        window.novels = [...window.novels, ...newItems];
+
+        console.log(`[Supabase] Berhasil memuat ${data.length} novel.`);
+        return true;
     } catch (error) {
-        console.error("Kesalahan saat memuat data novel dari Supabase:", error);
+        console.error("Kesalahan loadGlobalData:", error.message);
         return false;
     }
+}
+
+/**
+ * Mengambil detail lengkap satu novel hanya saat dibutuhkan (Lazy Loading).
+ */
+async function fetchNovelDetail(id) {
+    const local = window.novels.find(n => n.id === id);
+    // Jika sudah ada chapters, tidak perlu fetch lagi
+    if (local && local.chapters) return local;
+
+    const { data, error } = await window.supabase
+        .from('novels')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error("Gagal mengambil detail novel:", error.message);
+        return null;
+    }
+
+    // Update cache global
+    const index = window.novels.findIndex(n => n.id === id);
+    if (index !== -1) window.novels[index] = data;
+    else window.novels.push(data);
+
+    return data;
 }
 
 // Sortir ID untuk memastikan ID unik jika admin menambah novel baru
@@ -483,13 +523,13 @@ function setupSearch() {
 }
 
 // Fungsi untuk menampilkan detail novel di halaman detail.html
-function displayNovelDetail() {
+async function displayNovelDetail() {
     const detailContainer = document.getElementById('novel-detail');
     if (!detailContainer) return;
 
     const params = new URLSearchParams(window.location.search);
     const novelId = parseInt(params.get('id'));
-    const novel = novels.find(n => n.id === novelId);
+    const novel = await fetchNovelDetail(novelId);
 
     if (novel) {
         const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
@@ -589,7 +629,7 @@ function displayNovelDetail() {
 }
 
 // Fungsi untuk menampilkan isi bacaan bab di read.html
-function displayReadingContent() {
+async function displayReadingContent() {
     const readContainer = document.getElementById('read-container');
     if (!readContainer) return;
 
@@ -597,7 +637,7 @@ function displayReadingContent() {
     const novelId = parseInt(params.get('novelId'));
     const chapterId = parseInt(params.get('chapterId'));
 
-    const novel = novels.find(n => n.id === novelId);
+    const novel = await fetchNovelDetail(novelId);
     if (!novel) return;
 
     const chapters = novel.chapters || [];
@@ -1222,10 +1262,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupSearch();
     }
     if (document.getElementById('novel-detail')) {
-        displayNovelDetail();
+        await displayNovelDetail();
     }
     if (document.getElementById('read-container')) {
-        displayReadingContent();
+        await displayReadingContent();
     }
     setupFilters(); // Panggil di semua halaman agar navigasi berfungsi
     setupMobileMenu();
