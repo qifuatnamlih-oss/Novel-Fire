@@ -1050,6 +1050,171 @@ function setupReadingProgress() {
     });
 }
 
+// --- LOGIKA TEXT TO SPEECH (TTS) ---
+function setupTTS() {
+    const synth = window.speechSynthesis;
+    const ttsBtn = document.getElementById('tts-toggle');
+    const speedSelect = document.getElementById('tts-speed-select');
+    const voiceSelect = document.getElementById('tts-voice-select');
+    const sleepSelect = document.getElementById('tts-sleep-timer');
+    const contentArea = document.querySelector('.read-content');
+    
+    if (!ttsBtn || !contentArea || !speedSelect || !voiceSelect || !sleepSelect) return;
+
+    let voices = [];
+    let isSpeaking = false;
+    let isPaused = false;
+    let currentParagraphIndex = 0;
+    let paragraphElements = Array.from(contentArea.querySelectorAll('p[data-paragraph-index]'));
+    let currentUtterance = null;
+    let sleepTimeout = null;
+
+    // Muat preferensi kecepatan dari LocalStorage
+    const savedSpeed = localStorage.getItem('ttsSpeed');
+    if (savedSpeed) speedSelect.value = savedSpeed;
+
+    // Fungsi memuat daftar suara yang tersedia di browser
+    const loadVoices = () => {
+        voices = synth.getVoices();
+        // Prioritaskan suara bahasa Indonesia (id-ID)
+        const idVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('ID'));
+        const listToUse = idVoices.length > 0 ? idVoices : voices;
+
+        if (listToUse.length > 0) {
+            voiceSelect.style.display = 'block';
+            voiceSelect.innerHTML = listToUse.map(v => 
+                `<option value="${v.name}">${v.name}</option>`
+            ).join('');
+            
+            // Muat preferensi suara dari LocalStorage
+            const savedVoice = localStorage.getItem('ttsVoice');
+            if (savedVoice && listToUse.some(v => v.name === savedVoice)) {
+                voiceSelect.value = savedVoice;
+            }
+        }
+    };
+
+    // Chrome membutuhkan event listener ini karena pemuatan suara bersifat asinkron
+    if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
+
+    const stopTTS = () => {
+        if (sleepTimeout) clearTimeout(sleepTimeout);
+        synth.cancel();
+        isSpeaking = false;
+        isPaused = false;
+        paragraphElements.forEach(p => p.classList.remove('highlight'));
+        updateTTSUI();
+    };
+
+    const speakCurrentParagraph = () => {
+        if (currentParagraphIndex >= paragraphElements.length) {
+            stopTTS();
+            currentParagraphIndex = 0;
+            return;
+        }
+
+        const paragraph = paragraphElements[currentParagraphIndex];
+        currentUtterance = new SpeechSynthesisUtterance(paragraph.innerText);
+        
+        // Atur Suara yang dipilih
+        const selectedVoice = voices.find(v => v.name === voiceSelect.value);
+        if (selectedVoice) currentUtterance.voice = selectedVoice;
+        
+        currentUtterance.rate = parseFloat(speedSelect.value);
+        currentUtterance.pitch = 1.0;
+
+        currentUtterance.onstart = () => {
+            isSpeaking = true;
+            paragraph.classList.add('highlight');
+            
+            // FITUR AUTO-SCROLL: Gulir otomatis ke paragraf yang sedang dibaca
+            paragraph.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            updateTTSUI();
+        };
+
+        currentUtterance.onend = () => {
+            paragraph.classList.remove('highlight');
+            currentParagraphIndex++;
+            if (isSpeaking && !isPaused) speakCurrentParagraph();
+        };
+
+        synth.speak(currentUtterance);
+    };
+
+    const startSleepTimer = (minutes) => {
+        if (sleepTimeout) clearTimeout(sleepTimeout);
+        if (minutes === 0) return;
+
+        sleepTimeout = setTimeout(() => {
+            if (isSpeaking) {
+                stopTTS();
+                alert("Sleep Timer: TTS otomatis dihentikan.");
+                sleepSelect.value = "0";
+            }
+        }, minutes * 60000);
+    };
+
+    window.addEventListener('beforeunload', () => synth.cancel());
+
+    ttsBtn.addEventListener('click', () => {
+        if (isSpeaking) {
+            if (synth.paused) {
+                synth.resume();
+                isPaused = false;
+            } else {
+                synth.pause();
+                isPaused = true;
+            }
+        } else {
+            stopTTS();
+            currentParagraphIndex = 0;
+            speakCurrentParagraph();
+            
+            // Mulai timer jika sudah diset sebelumnya
+            if (parseInt(sleepSelect.value) > 0) {
+                startSleepTimer(parseInt(sleepSelect.value));
+            }
+        }
+        updateTTSUI();
+    });
+
+    // Simpan preferensi dan reset pembacaan jika ada perubahan
+    speedSelect.addEventListener('change', () => {
+        localStorage.setItem('ttsSpeed', speedSelect.value);
+        if (isSpeaking) {
+            synth.cancel();
+            speakCurrentParagraph();
+        }
+    });
+
+    voiceSelect.addEventListener('change', () => {
+        localStorage.setItem('ttsVoice', voiceSelect.value);
+        if (isSpeaking) {
+            synth.cancel();
+            speakCurrentParagraph();
+        }
+    });
+
+    sleepSelect.addEventListener('change', () => {
+        const minutes = parseInt(sleepSelect.value);
+        if (isSpeaking) {
+            if (minutes > 0) startSleepTimer(minutes);
+            else if (sleepTimeout) clearTimeout(sleepTimeout);
+        }
+    });
+
+    function updateTTSUI() {
+        const icon = ttsBtn.querySelector('i');
+        const isActuallyPlaying = isSpeaking && !isPaused;
+        icon.className = isActuallyPlaying ? 'fas fa-pause' : 'fas fa-play';
+        ttsBtn.classList.toggle('active', isSpeaking);
+    }
+}
+
 // Fungsi untuk mengelola tombol Back to Top
 function setupBackToTop() {
     const backToTopBtn = document.getElementById('back-to-top');
