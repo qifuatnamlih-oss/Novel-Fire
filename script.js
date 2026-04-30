@@ -116,6 +116,26 @@ window.toggleUserMenu = () => {
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 };
 
+// --- UTILITAS UI/UX: CUSTOM TOAST ---
+window.showToast = function(message, duration = 3000) {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+};
+
 // --- LOGIKA NOTIFIKASI REAL-TIME ---
 function listenToNotifications() {
     window.supabase
@@ -126,7 +146,7 @@ function listenToNotifications() {
             table: 'notifications', 
             filter: `receiver_id=eq.${currentUser.id}` 
         }, payload => {
-            showNotificationToast("Seseorang membalas komentar Anda!");
+            showToast("🔔 Seseorang membalas komentar Anda!");
             fetchNotifications();
         })
         .subscribe();
@@ -272,7 +292,16 @@ function displayNovels(novelList) {
     novelGrid.innerHTML = ''; // Kosongkan grid sebelum mengisi ulang
 
     if (novelList.length === 0) {
-        novelGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Tidak ada novel ditemukan.</p>';
+        // Tampilkan Skeletons saat loading (visual feedback lebih baik)
+        for(let i=0; i<6; i++) {
+            novelGrid.innerHTML += `
+                <div class="novel-card">
+                    <div class="skeleton" style="height: 200px; width: 100%; margin-bottom: 10px;"></div>
+                    <div class="skeleton" style="height: 20px; width: 80%; margin: 5px auto;"></div>
+                    <div class="skeleton" style="height: 15px; width: 60%; margin: 5px auto;"></div>
+                </div>
+            `;
+        }
         return;
     }
     

@@ -9,13 +9,13 @@
     --font-size-large: 1.3rem;
     --font-size-xlarge: 1.45rem;
     --white: #ffffff;
-    --shadow-soft: 0 4px 20px rgba(0,0,0,0.08);
-    --shadow-strong: 0 8px 30px rgba(0,0,0,0.12);
+    --shadow-soft: 0 10px 30px -5px rgba(0,0,0,0.05);
+    --shadow-strong: 0 20px 40px -10px rgba(0,0,0,0.1);
     --primary-hover: #cf3d16;
     --reveal-duration: 0.8s;
     --reveal-delay: 0.3s;
     --border-radius: 12px;
-    --border-color: rgba(0,0,0,0.05);
+    --border-color: rgba(0,0,0,0.08);
     --header-text: #ffffff;
     --nav-text: #ffffff;
     --novel-text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* Bayangan untuk teks 'Novel' */
@@ -24,11 +24,15 @@
 /* Dark Mode Variables Override */
 body.dark-mode {
     --light-bg: #0f172a; /* Deep Slate Blue-Black */
+    --light-bg: #020617; /* Lebih gelap untuk kedalaman */
     --text-color: #f1f5f9;
     --white: #1e293b; /* Elevated Grey-Blue */
     --dark-bg: #020617; /* Header background in dark mode */
+    --white: #0f172a; /* Permukaan kartu (elevated) */
+    --dark-bg: #020617;
     --nav-bg: #0f172a;  /* Nav background in dark mode */
     --shadow-soft: 0 10px 25px rgba(0,0,0,0.5);
+    --shadow-strong: 0 15px 35px rgba(0,0,0,0.6);
     --border-color: rgba(255,255,255,0.08);
     --header-text: #f1f5f9;
     --nav-text: #cbd5e1;
@@ -43,6 +47,55 @@ body {
     color: var(--text-color);
     transition: background-color 0s var(--reveal-delay), color 0.3s ease;
     scroll-behavior: smooth;
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+    background: linear-gradient(90deg, var(--light-bg) 25%, var(--border-color) 50%, var(--light-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Elegant Toast Notification */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: var(--dark-bg);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    box-shadow: var(--shadow-strong);
+    font-size: 0.9rem;
+    animation: toast-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes toast-in {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Perbaikan Input Global untuk Dark Mode */
+body.dark-mode input, 
+body.dark-mode textarea, 
+body.dark-mode select {
+    background-color: var(--white) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
 }
 
 /* Lapisan Dark Mode untuk efek menyebar */
@@ -198,6 +251,10 @@ body { top: 0px !important; }
     border-radius: 4px !important;
     font-size: 0.85rem !important;
     cursor: pointer !important;
+}
+
+.goog-te-gadget-simple {
+    transition: background-color 0.3s ease;
 }
 
 .goog-te-gadget-simple img { display: none !important; }
@@ -445,7 +502,9 @@ body.dark-mode .scroll-arrow:hover {
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
 }
+body.dark-mode .update-item { background: var(--white); }
 
 .update-item:hover {
     transform: translateX(5px);
@@ -502,11 +561,13 @@ body.dark-mode .scroll-arrow:hover {
     width: 180px; /* Menetapkan lebar tetap untuk setiap kartu */
     border: 1px solid var(--border-color);
     cursor: pointer;
+    overflow: hidden;
 }
 
 .novel-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--primary-color);
 }
 
 .novel-card img {
@@ -731,8 +792,10 @@ body.dark-mode .scroll-arrow:hover {
     display: flex; 
     justify-content: center; 
     gap: 15px; 
+    gap: 10px; 
     margin: 10px 0 25px 0;
     padding-bottom: 15px;
+    flex-wrap: wrap; /* Supaya tombol tidak overflow di HP */
 }
 .btn-action {
     background: none;
@@ -784,12 +847,21 @@ body.dark-mode .scroll-arrow:hover {
 
 .read-content { font-size: 1.25rem; line-height: 1.8; color: #2c3e50; text-align: left; }
 .dark-mode .read-content { color: #e2e8f0; }
-.read-content p { margin-bottom: 20px; }
+.read-content p { 
+    margin-bottom: 28px; 
+    letter-spacing: 0.01em; 
+    word-spacing: 0.05em;
+}
 
 /* Highlighted paragraph for TTS */
 .read-content p.highlight {
     background-color: rgba(255, 255, 0, 0.3); /* Soft yellow highlight */
     transition: background-color 0.3s ease;
+}
+
+/* Memastikan link di dark mode tidak terlalu biru default */
+body.dark-mode a {
+    color: var(--primary-color);
 }
 
 body.dark-mode .read-content p.highlight {
@@ -1144,13 +1216,18 @@ footer {
     }
 
     header { padding: 1rem 0; }
+    header { padding: 1.2rem 0; }
     header h1 { font-size: 1.5rem; }
+
+    .read-header h2 { font-size: 1.1rem; }
+    .read-header h3 { font-size: 1.3rem; }
 
     .menu-toggle {
         display: block;
         width: 100%;
         text-align: center;
         color: white;
+        color: var(--nav-text);
         background: var(--nav-bg);
         padding: 10px 0;
         cursor: pointer;
@@ -1278,6 +1355,13 @@ footer {
 
     .read-actions {
         justify-content: center; /* Pusatkan tombol di mobile */
+        gap: 8px;
+    }
+
+    .tts-controls {
+        width: 100%;
+        justify-content: center;
+        margin: 5px 0;
     }
 
     /* Responsive Table to Card */
