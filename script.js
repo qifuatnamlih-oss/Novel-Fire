@@ -1244,6 +1244,42 @@ function setupTTS() {
     }
 }
 
+// --- LOGIKA FOOTER DINAMIS ---
+async function loadDynamicFooter() {
+    if (!window.supabase) return;
+    const { data } = await window.supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'social_links')
+        .single();
+
+    if (data && data.value) {
+        const links = data.value;
+        if (document.getElementById('footer-fb')) document.getElementById('footer-fb').href = links.facebook || '#';
+        if (document.getElementById('footer-tw')) document.getElementById('footer-tw').href = links.twitter || '#';
+        if (document.getElementById('footer-ig')) document.getElementById('footer-ig').href = links.instagram || '#';
+        if (document.getElementById('footer-ds')) document.getElementById('footer-ds').href = links.discord || '#';
+    }
+}
+
+// --- LOGIKA BRANDING (LOGO) ---
+async function loadSiteConfig() {
+    if (!window.supabase) return;
+    const { data } = await window.supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'site_config')
+        .single();
+
+    if (data && data.value && data.value.logo_url) {
+        const logoUrl = data.value.logo_url;
+        const logoLinks = document.querySelectorAll('header h1 a');
+        logoLinks.forEach(link => {
+            link.innerHTML = `<img src="${logoUrl}" alt="Logo" class="header-logo">`;
+        });
+    }
+}
+
 // Fungsi untuk mengelola tombol Back to Top
 function setupBackToTop() {
     const backToTopBtn = document.getElementById('back-to-top');
@@ -1452,6 +1488,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkUserSession();
     // Muat data global terlebih dahulu
     await loadGlobalData();
+
+    loadDynamicFooter(); // Muat tautan sosial media untuk footer
+    loadSiteConfig(); // Muat logo website
 
     setupDarkMode(); // Harus dipanggil paling awal untuk kenyamanan visual
 

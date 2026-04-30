@@ -161,6 +161,44 @@
         </div>
 
         <div class="admin-card">
+            <h2><i class="fas fa-image"></i> Pengaturan Branding</h2>
+            <p>Upload logo website Anda (disarankan format PNG transparan untuk hasil terbaik).</p>
+            <form id="site-branding-form">
+                <div class="admin-form-group">
+                    <label>Logo Website</label>
+                    <input type="file" id="site-logo-input" accept="image/*">
+                    <input type="hidden" id="site-logo-url-hidden">
+                    <img id="logo-preview" src="https://via.placeholder.com/150x50" alt="Pratinjau Logo" style="max-height: 50px; margin-top: 10px; display: block; background: #eee; padding: 5px; border-radius: 4px;">
+                </div>
+                <button type="submit" id="save-branding-btn" class="btn-admin btn-success">Upload & Simpan Logo</button>
+            </form>
+        </div>
+
+        <div class="admin-card">
+            <h2><i class="fas fa-share-alt"></i> Pengaturan Media Sosial</h2>
+            <p>Tautan ini akan muncul di seluruh footer halaman NovelFire.</p>
+            <form id="social-settings-form">
+                <div class="admin-form-group">
+                    <label><i class="fab fa-facebook-f"></i> Facebook URL</label>
+                    <input type="url" id="social-fb" placeholder="https://facebook.com/yourpage">
+                </div>
+                <div class="admin-form-group">
+                    <label><i class="fab fa-twitter"></i> Twitter/X URL</label>
+                    <input type="url" id="social-tw" placeholder="https://twitter.com/yourprofile">
+                </div>
+                <div class="admin-form-group">
+                    <label><i class="fab fa-instagram"></i> Instagram URL</label>
+                    <input type="url" id="social-ig" placeholder="https://instagram.com/yourprofile">
+                </div>
+                <div class="admin-form-group">
+                    <label><i class="fab fa-discord"></i> Discord Invite URL</label>
+                    <input type="url" id="social-ds" placeholder="https://discord.gg/yourserver">
+                </div>
+                <button type="submit" class="btn-admin btn-success">Simpan Tautan Sosial</button>
+            </form>
+        </div>
+
+        <div class="admin-card">
             <h2><i class="fas fa-database"></i> Backup & Sinkronisasi</h2>
             <p>Gunakan fitur ini untuk memindahkan data (novel baru, komentar, riwayat) antar perangkat.</p>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -193,10 +231,10 @@
     <footer>
         <p>NovelFire &copy; 2026 - Platform Baca Novel Terlengkap</p>
         <div class="social-links">
-            <a href="#" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-icon" title="Twitter"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
+            <a href="#" id="footer-fb" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" id="footer-tw" class="social-icon" title="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" id="footer-ig" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" id="footer-ds" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
         </div>
     </footer>
 
@@ -228,6 +266,8 @@
                 loginSection.style.display = 'none';
                 adminContent.style.display = 'block';
                 if (typeof novels !== 'undefined' && novels.length > 0) renderAdminNovels();
+                loadSocialSettings(); // Muat data sosial saat login berhasil
+                loadSiteSettings(); // Muat pengaturan branding
             } else {
                 loginSection.style.display = 'block';
                 adminContent.style.display = 'none';
@@ -884,6 +924,109 @@
             reader.onload = (e) => importData(e.target.result);
             reader.readAsText(file);
         }
+
+        // --- LOGIKA PENGATURAN SOSIAL MEDIA ---
+        async function loadSiteSettings() {
+            const { data, error } = await window.supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'site_config')
+                .single();
+            
+            if (data && data.value) {
+                document.getElementById('site-logo-url-hidden').value = data.value.logo_url || '';
+                document.getElementById('logo-preview').src = data.value.logo_url || 'https://via.placeholder.com/150x50';
+            }
+        }
+
+        document.getElementById('site-branding-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const logoFile = document.getElementById('site-logo-input').files[0];
+            const existingUrl = document.getElementById('site-logo-url-hidden').value;
+            let logoUrl = existingUrl;
+
+            const btn = document.getElementById('save-branding-btn');
+            btn.disabled = true;
+            btn.textContent = 'Memproses...';
+
+            if (logoFile) {
+                const fileName = `logo-${Date.now()}.png`;
+                const { data, error: uploadError } = await window.supabase.storage
+                    .from('site-assets')
+                    .upload(fileName, logoFile);
+
+                if (uploadError) {
+                    alert('Gagal upload: ' + uploadError.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Upload & Simpan Logo';
+                    return;
+                }
+
+                const { data: urlData } = window.supabase.storage.from('site-assets').getPublicUrl(fileName);
+                logoUrl = urlData.publicUrl;
+            }
+
+            const { error } = await window.supabase
+                .from('settings')
+                .upsert({ key: 'site_config', value: { logo_url: logoUrl } }, { onConflict: 'key' });
+
+            if (error) {
+                alert("Gagal menyimpan: " + error.message);
+            } else {
+                if (typeof showToast === 'function') showToast("✅ Branding website diperbarui!");
+                else alert("Logo website diperbarui!");
+                loadSiteConfig(); // Update logo di header admin secara instan
+            }
+            btn.disabled = false;
+            btn.textContent = 'Upload & Simpan Logo';
+        });
+
+        document.getElementById('site-logo-input')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => document.getElementById('logo-preview').src = ev.target.result;
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function loadSocialSettings() {
+            const { data, error } = await window.supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'social_links')
+                .single();
+            
+            if (data && data.value) {
+                document.getElementById('social-fb').value = data.value.facebook || '';
+                document.getElementById('social-tw').value = data.value.twitter || '';
+                document.getElementById('social-ig').value = data.value.instagram || '';
+                document.getElementById('social-ds').value = data.value.discord || '';
+            }
+        }
+
+        document.getElementById('social-settings-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const links = {
+                facebook: document.getElementById('social-fb').value,
+                twitter: document.getElementById('social-tw').value,
+                instagram: document.getElementById('social-ig').value,
+                discord: document.getElementById('social-ds').value
+            };
+
+            const { error } = await window.supabase
+                .from('settings')
+                .upsert({ key: 'social_links', value: links }, { onConflict: 'key' });
+
+            if (error) {
+                alert("Gagal menyimpan: " + error.message);
+            } else {
+                if (typeof showToast === 'function') showToast("✅ Tautan sosial media berhasil diperbarui!");
+                else alert("Tautan sosial media berhasil diperbarui!");
+                // Perbarui footer di halaman admin secara instan
+                if (typeof loadDynamicFooter === 'function') loadDynamicFooter();
+            }
+        });
     </script>
 </body>
 </html>

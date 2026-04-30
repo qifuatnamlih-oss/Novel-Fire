@@ -151,6 +151,13 @@ header h1 a {
     text-shadow: var(--novel-text-shadow); /* Terapkan bayangan lembut */
 }
 
+.header-logo {
+    max-height: 48px;
+    width: auto;
+    vertical-align: middle;
+    transition: transform 0.3s ease;
+}
+
 header h1 a span {
     color: #ffca28; /* Warna kuning emas sebagai dasar api */
     font-weight: bold;
