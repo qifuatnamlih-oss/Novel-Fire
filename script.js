@@ -10,28 +10,23 @@ window.googleTranslateElementInit = function() {
 
 // Data novel dalam bentuk Array of Objects
 window.novels = window.novels || [];
-// Inisialisasi Supabase Client
-const SUPABASE_CONFIG = {
-    url: 'https://lvfwgvzdididpkgkjzfz.supabase.co',
-    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2ZndndnpkaWRpZHBrZ2tqemZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODI3MzEsImV4cCI6MjA5MjQ1ODczMX0.B5hbm_p3ZTHCFhQX4_eqzWydRbZGddnXF8KOEJrDSW4'
-};
 
-// Inisialisasi Supabase Client secara global
-try {
-    // Memastikan library Supabase dari CDN sudah siap
-    if (typeof supabase !== 'undefined') {
-        window.supabase = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true 
-            }
-        });
-    } else {
-        console.error("Supabase Error: Library CDN tidak ditemukan.");
+// Fungsi Inisialisasi Supabase secara Async
+async function initSupabase() {
+    try {
+        const response = await fetch('/api/get-config');
+        const config = await response.json();
+        
+        if (typeof supabase !== 'undefined') {
+            window.supabase = supabase.createClient(config.url, config.key, {
+                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+            });
+            return true;
+        }
+    } catch (error) {
+        console.error("Gagal memuat konfigurasi Supabase:", error);
     }
-} catch (error) {
-    console.error("Gagal menginisialisasi Supabase Client:", error.message);
+    return false;
 }
 
 // --- LOGIKA AUTH & PROFIL ---
@@ -1234,6 +1229,10 @@ function importData(jsonContent) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Inisialisasi Supabase terlebih dahulu
+    const initialized = await initSupabase();
+    if (!initialized) return;
+
     // Cek sesi user saat halaman dimuat
     await checkUserSession();
     // Muat data global terlebih dahulu
