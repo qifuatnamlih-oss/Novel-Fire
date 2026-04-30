@@ -573,6 +573,9 @@ body.dark-mode .update-item { background: var(--white); }
 .novel-card img {
     width: 100%;
     height: auto;
+    aspect-ratio: 2 / 3; /* Rasio standar cover buku (Portrait) */
+    object-fit: cover; /* Menjaga gambar tetap proporsional */
+    background-color: var(--border-color); /* Placeholder visual saat loading */
     border-radius: 6px;
     margin-bottom: 10px;
 }
