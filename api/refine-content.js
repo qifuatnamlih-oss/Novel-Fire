@@ -29,16 +29,26 @@ export default async function handler(req, res) {
 
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      // Longgarkan filter keamanan agar tidak mudah memicu error "Blocked" pada konten novel
+      safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+      ]
+    });
 
     const result = await model.generateContent(prompt);
-    const response = result.response;
-    const refinedText = response.text();
-
-    if (!refinedText) {
-      throw new Error("AI tidak menghasilkan teks");
+    const response = await result.response;
+    
+    // Cek apakah ada hasil yang dikembalikan
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new Error("AI tidak mengembalikan hasil (mungkin konten diblokir).");
     }
 
+    const refinedText = response.text();
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
     // Jika limit tercapai atau error lain, kembalikan konten asli agar proses tetap jalan

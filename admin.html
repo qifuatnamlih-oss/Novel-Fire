@@ -435,8 +435,7 @@
                             const aiData = await aiRes.json();
                             if (aiData.refinedContent) content = aiData.refinedContent;
                         } else {
-                            const errorText = await aiRes.text();
-                            console.warn("Server mengembalikan non-JSON:", errorText);
+                            console.warn("Server error (500) atau Timeout. Menggunakan teks asli.");
                         }
                     } catch (e) { 
                         console.error("AI Refine gagal untuk bab ini:", e); 
@@ -444,8 +443,8 @@
                 }
                 
                 if (bulkProgressBar) bulkProgressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
-                // Jeda 2 detik jika menggunakan AI untuk menghindari 429 Too Many Requests
-                if (useAI && i < segments.length - 1) await new Promise(r => setTimeout(r, 2000));
+                // Jeda 4.5 detik untuk mematuhi limit 15 RPM Gemini Free Tier
+                if (useAI && i < segments.length - 1) await new Promise(r => setTimeout(r, 4500));
 
                 newChapters.push({
                     id: baseId + i,
