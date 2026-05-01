@@ -108,6 +108,10 @@
                     <input type="checkbox" id="ai-refine-toggle" style="width: auto;">
                     <label for="ai-refine-toggle" style="font-size: 0.85rem; margin-bottom: 0;">Gunakan AI untuk perbaiki Bahasa Indonesia & Gaya Bahasa</label>
                 </div>
+                <div class="admin-form-group" id="custom-prompt-container" style="display: none;">
+                    <label style="font-size: 0.85rem;">Prompt AI Kustom (Opsional)</label>
+                    <textarea id="bulk-ai-prompt" rows="3" placeholder="Contoh: Ubah gaya bahasa menjadi lebih puitis dan gunakan sapaan 'Kakanda' untuk tokoh utama." style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
+                </div>
                 <div class="admin-form-group">
                     <label style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
                     <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh NovelFire Team. Selamat membaca!" style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
@@ -396,6 +400,7 @@
             const segments = text.split(/###\s+/).filter(s => s.trim() !== "");
             
             const customNote = document.getElementById('bulk-custom-note').value.trim();
+            const customAiPrompt = document.getElementById('bulk-ai-prompt').value.trim();
             const notePrefix = customNote ? `Catatan Penerjemah: ${customNote}\n\n` : '';
             const useAI = document.getElementById('ai-refine-toggle').checked;
             
@@ -415,7 +420,7 @@
                         const aiRes = await fetch('/api/refine-content', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content })
+                            body: JSON.stringify({ content, customPrompt: customAiPrompt })
                         });
                         const aiData = await aiRes.json();
                         if (aiData.refinedContent) content = aiData.refinedContent;
@@ -429,10 +434,15 @@
                 });
             }
 
+            // Set 100% setelah loop selesai
+            progressBar.style.width = '100%';
+            statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyiapkan unggahan...`;
+
             // Logika pendeteksian jumlah bab
             if (newChapters.length === 0) {
                 alert("Format tidak dikenali. Pastikan file menggunakan '### Judul' sebagai pemisah.");
                 statusDiv.style.display = 'none';
+                progressContainer.style.display = 'none';
                 bulkUploadBtn.disabled = false;
                 return;
             }
@@ -459,7 +469,7 @@
             }
             // Aktifkan tombol kembali dan sembunyikan status setelah beberapa saat
             bulkUploadBtn.disabled = false;
-            setTimeout(() => { statusDiv.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
+            setTimeout(() => { statusDiv.style.display = 'none'; progressContainer.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
         };
 
         window.editChapter = function(chapterId) {
@@ -492,21 +502,69 @@
             document.getElementById('ch-cancel-btn').style.display = 'none';
         };
 
+        // --- LOGIKA HAPUS BAB MASAL ---
+        window.toggleSelectAllChapters = function(source) {
+            const checkboxes = document.querySelectorAll('.chapter-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        };
+
+        window.deleteSelectedChapters = async function() {
+            const selectedCheckboxes = document.querySelectorAll('.chapter-checkbox:checked');
+            const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+
+            if (selectedIds.length === 0) {
+                alert("Silakan pilih bab yang ingin dihapus terlebih dahulu.");
+                return;
+            }
+
+            if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} bab yang dipilih?`)) return;
+
+            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const updatedChapters = novel.chapters.filter(ch => !selectedIds.includes(ch.id));
+
+            const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+
+            if (error) {
+                alert("Gagal menghapus bab: " + error.message);
+            } else {
+                alert(`${selectedIds.length} bab berhasil dihapus!`);
+                await loadGlobalData();
+                renderChapterList(novels.find(n => n.id === activeNovelIdForChapters).chapters);
+            }
+        };
+
         function renderChapterList(chapters) {
             const container = document.getElementById('chapter-admin-list');
             if (chapters.length === 0) {
                 container.innerHTML = '<p>Belum ada bab.</p>';
                 return;
             }
-            container.innerHTML = chapters.map(ch => `
+            
+            let html = `
+                <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: var(--light-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold;">
+                        <input type="checkbox" id="select-all-chapters" onclick="toggleSelectAllChapters(this)"> Pilih Semua
+                    </label>
+                    <button onclick="deleteSelectedChapters()" class="btn-admin btn-danger" style="padding: 5px 12px; font-size: 0.85rem;">
+                        <i class="fas fa-trash-alt"></i> Hapus Terpilih
+                    </button>
+                </div>
+            `;
+
+            html += chapters.map(ch => `
                 <div class="chapter-admin-item">
-                    <h4>${ch.title}</h4>
-                    <div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" class="chapter-checkbox" value="${ch.id}">
+                        <h4>${ch.title}</h4>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
                         <button onclick="editChapter(${ch.id})" class="btn-admin btn-success" style="padding: 5px 10px; margin-right: 5px;"><i class="fas fa-edit"></i></button>
                         <button onclick="deleteChapter(${ch.id})" class="btn-admin btn-danger" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
+
+            container.innerHTML = html;
         }
 
         document.getElementById('chapter-form')?.addEventListener('submit', async (e) => {
@@ -828,6 +886,11 @@
             // Event listener untuk filter novel
             document.getElementById('novel-search')?.addEventListener('input', (e) => {
                 renderAdminNovels(e.target.value);
+            });
+
+            // Tampilkan/Sembunyikan input prompt kustom berdasarkan checkbox AI
+            document.getElementById('ai-refine-toggle')?.addEventListener('change', function(e) {
+                document.getElementById('custom-prompt-container').style.display = e.target.checked ? 'block' : 'none';
             });
 
             // Event listener untuk filter komentar
