@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
@@ -21,27 +23,20 @@ export default async function handler(req, res) {
   prompt += `\nTeks yang harus diperbaiki:\n${content}`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const data = await response.json();
-    
-    if (data.error) {
-      return res.status(200).json({ refinedContent: content, error: data.error.message });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const refinedText = response.text();
+
+    if (!refinedText) {
+      throw new Error("AI tidak menghasilkan teks");
     }
 
-    if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-      return res.status(200).json({ refinedContent: content, warning: 'AI tidak memberikan hasil, menggunakan teks asli.' });
-    }
-
-    const refinedText = data.candidates[0].content.parts[0].text;
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
+    console.error("Gemini Error:", error);
     res.status(200).json({ refinedContent: content, error: 'Gagal memproses teks dengan AI' });
   }
 }

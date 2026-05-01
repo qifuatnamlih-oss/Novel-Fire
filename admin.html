@@ -369,13 +369,13 @@
             const fileInput = document.getElementById('bulk-chapter-file');
             const file = fileInput.files[0];
             const statusDiv = document.getElementById('bulk-upload-status');
-            const progressBar = document.getElementById('bulk-progress-bar');
-            const progressContainer = document.getElementById('bulk-progress-container');
+            const bulkProgressBar = document.getElementById('bulk-progress-bar');
+            const bulkProgressContainer = document.getElementById('bulk-progress-container');
 
             // Tampilkan status dan nonaktifkan tombol
             statusDiv.style.display = 'block';
-            if (progressContainer) progressContainer.style.display = 'block';
-            if (progressBar) progressBar.style.width = '0%';
+            if (bulkProgressContainer) bulkProgressContainer.style.display = 'block';
+            if (bulkProgressBar) bulkProgressBar.style.width = '0%';
             statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai proses...';
             bulkUploadBtn.disabled = true;
             
@@ -433,8 +433,8 @@
                     } catch (e) { console.error("AI Refine gagal untuk bab ini", e); }
                 }
                 
-                if (progressBar) progressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
-                // Jeda 1 detik jika menggunakan AI untuk menghindari Rate Limit
+                if (bulkProgressBar) bulkProgressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
+                // Jeda 1.5 detik jika menggunakan AI untuk menghindari Rate Limit Gemini
                 if (useAI && segments.length > 1) await new Promise(r => setTimeout(r, 1000));
 
                 newChapters.push({
@@ -445,14 +445,14 @@
             }
 
             // Set 100% setelah loop selesai
-            if (progressBar) progressBar.style.width = '100%';
+            if (bulkProgressBar) bulkProgressBar.style.width = '100%';
             statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyiapkan unggahan...`;
 
             // Logika pendeteksian jumlah bab
             if (newChapters.length === 0) {
                 alert("Format tidak dikenali. Pastikan file menggunakan '### Judul' sebagai pemisah.");
                 statusDiv.style.display = 'none';
-                if (progressContainer) progressContainer.style.display = 'none';
+                if (bulkProgressContainer) bulkProgressContainer.style.display = 'none';
                 bulkUploadBtn.disabled = false;
                 return;
             }
@@ -479,7 +479,7 @@
             }
             // Aktifkan tombol kembali dan sembunyikan status setelah beberapa saat
             bulkUploadBtn.disabled = false;
-            setTimeout(() => { statusDiv.style.display = 'none'; if (progressContainer) progressContainer.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
+            setTimeout(() => { statusDiv.style.display = 'none'; if (bulkProgressContainer) bulkProgressContainer.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
         };
 
         window.editChapter = function(chapterId) {
