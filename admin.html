@@ -616,8 +616,8 @@
             }
 
             let allComments = comments.map(c => {
-                const novel = novels.find(n => n.id === c.novel_id);
-                const chapter = novel ? novel.chapters.find(ch => ch.id === c.chapter_id) : null;
+                const novel = (window.novels || []).find(n => n.id === c.novel_id);
+                const chapter = (novel && novel.chapters) ? novel.chapters.find(ch => ch.id === c.chapter_id) : null;
                 return {
                     ...c,
                     novelTitle: novel ? novel.title : 'Novel Terhapus',
