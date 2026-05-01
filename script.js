@@ -26,18 +26,14 @@ async function initSupabase() {
                 return true;
             }
 
-            // --- START FIX: Directly provide Supabase URL and Key for static hosting ---
-            // Ganti dengan URL dan Anon Key Supabase Anda
-            // Anda bisa menemukannya di Supabase Project Settings -> API
-            const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // Contoh: 'https://abcdefghijk.supabase.co'
-            const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Contoh: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-                console.error("Supabase URL atau Anon Key belum diatur. Silakan ganti placeholder di script.js.");
-                throw new Error("Supabase konfigurasi belum lengkap.");
-            }
-            // --- END FIX ---
+            // Mengambil konfigurasi dari serverless function Vercel
+            const response = await fetch('/api/get-config');
+            if (!response.ok) throw new Error("Gagal mengambil konfigurasi dari server");
+            const config = await response.json();
             
+            const SUPABASE_URL = config.url;
+            const SUPABASE_ANON_KEY = config.key;
+
             const lib = typeof supabase !== 'undefined' ? supabase : window.supabase;
             if (lib && typeof lib.createClient === 'function') {
                 window.supabase = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { // Use the directly provided config
