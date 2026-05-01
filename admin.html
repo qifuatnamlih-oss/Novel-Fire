@@ -76,7 +76,7 @@
                 </div>
                 <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database Lokal</button>
                 <button type="button" id="cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetForm()">Batal</button>
-                <img id="image-preview" src="https://via.placeholder.com/150x200" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;" loading="lazy">
+                <img id="image-preview" src="https://placehold.co/150x200?text=Preview" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;" loading="lazy">
             </form>
         </div>
 
@@ -168,7 +168,7 @@
                     <label>Logo Website</label>
                     <input type="file" id="site-logo-input" accept="image/*">
                     <input type="hidden" id="site-logo-url-hidden">
-                    <img id="logo-preview" src="https://via.placeholder.com/150x50" alt="Pratinjau Logo" style="max-height: 50px; margin-top: 10px; display: block; background: #eee; padding: 5px; border-radius: 4px;">
+                    <img id="logo-preview" src="https://placehold.co/150x50?text=Logo" alt="Pratinjau Logo" style="max-height: 50px; margin-top: 10px; display: block; background: #eee; padding: 5px; border-radius: 4px;">
                 </div>
                 <button type="submit" id="save-branding-btn" class="btn-admin btn-success">Upload & Simpan Logo</button>
             </form>
@@ -735,7 +735,7 @@
             document.getElementById('adm-id').value = '';
             document.getElementById('adm-author').value = '';
             document.getElementById('adm-image-url-hidden').value = '';
-            document.getElementById('image-preview').src = "https://via.placeholder.com/150x200";
+            document.getElementById('image-preview').src = "https://placehold.co/150x200?text=Preview";
             formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Novel Baru';
             submitBtn.textContent = 'Simpan ke Database';
             cancelBtn.style.display = 'none';
@@ -938,7 +938,7 @@
             
             if (data && data.value) {
                 document.getElementById('site-logo-url-hidden').value = data.value.logo_url || '';
-                document.getElementById('logo-preview').src = data.value.logo_url || 'https://via.placeholder.com/150x50';
+                document.getElementById('logo-preview').src = data.value.logo_url || 'https://placehold.co/150x50?text=Logo';
             }
         }
 

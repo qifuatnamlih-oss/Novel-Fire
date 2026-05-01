@@ -15,19 +15,23 @@ window.novels = window.novels || [];
 async function initSupabase() {
     try {
         // Cek jika sudah diinisialisasi sebagai instance (bukan library)
-        if (window.supabase && typeof window.supabase.from === 'function') return true;
+        if (window.supabase && typeof window.supabase.createClient !== 'function' && typeof window.supabase.from === 'function') {
+            return true;
+        }
 
         const response = await fetch('/api/get-config');
         const config = await response.json();
         
-        if (typeof supabase !== 'undefined') {
-            window.supabase = supabase.createClient(config.url, config.key, {
+        // Gunakan referensi library secara hati-hati agar tidak tertukar dengan instance
+        const lib = window.supabase;
+        if (lib && typeof lib.createClient === 'function') {
+            window.supabase = lib.createClient(config.url, config.key, {
                 auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
             });
             return true;
         }
     } catch (error) {
-        console.error("Gagal memuat konfigurasi Supabase:", error);
+        console.error("Gagal menginisialisasi Supabase:", error);
     }
     return false;
 }
@@ -277,7 +281,7 @@ function renderNovelCard(novel) {
             <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
                 <i class="fas fa-heart"></i>
             </button>
-            <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy">
+            <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy" onerror="this.src='https://placehold.co/150x200?text=No+Cover'">
             <h3>${escapeHTML(novel.title)}</h3>
             <p class="author-link" style="font-size: 0.8rem; color: var(--primary-color); margin: -5px 0 5px; cursor: pointer;" onclick="filterByAuthor('${escapeHTML(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
                 ${novel.author || 'Anonim'}
