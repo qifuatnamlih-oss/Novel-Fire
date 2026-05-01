@@ -798,8 +798,9 @@ body.dark-mode .update-item { background: var(--white); }
 .read-actions { 
     display: flex; 
     justify-content: center; 
-    gap: 15px; 
     gap: 10px; 
+    margin: 10px 0 25px 0;
+    paddin0px; 
     margin: 10px 0 25px 0;
     padding-bottom: 15px;
     flex-wrap: wrap; /* Supaya tombol tidak overflow di HP */
@@ -890,6 +891,13 @@ body.dark-mode .read-content p.highlight {
     padding-bottom: 20px;
     border-top: none;
     border-bottom: 1px solid var(--border-color);
+}
+
+.read-header h3 {
+    font-size: 1.8rem;
+    margin-top: 10px;
+    line-height: 1.3;
+    color: var(--text-color);
 }
 
 /* Back to Top Button */
@@ -1048,7 +1056,7 @@ body.dark-mode .read-content p.highlight {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chapter-item:hover {
@@ -1261,6 +1269,7 @@ footer {
 
     .read-header h2 { font-size: 1.1rem; }
     .read-header h3 { font-size: 1.3rem; }
+    .read-header { margin-bottom: 20px; padding-bottom: 10px; }
 
     .menu-toggle {
         display: block;

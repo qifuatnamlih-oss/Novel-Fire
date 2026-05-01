@@ -11,6 +11,8 @@ window.googleTranslateElementInit = function() {
 // Data novel dalam bentuk Array of Objects
 window.novels = window.novels || [];
 
+window.chapterSortOrder = window.chapterSortOrder || 'asc';
+
 let supabaseInitPromise = null;
 
 // Fungsi Inisialisasi Supabase secara Async
@@ -570,6 +572,23 @@ async function displayNovelDetail() {
 
     const params = new URLSearchParams(window.location.search);
     const novelId = parseInt(params.get('id'));
+
+    // UI/UX: Tampilkan Skeleton UI saat memuat detail novel
+    detailContainer.innerHTML = `
+        <div class="detail-header" style="border:none; box-shadow:none;">
+            <div class="skeleton" style="width: 250px; height: 350px; border-radius: 8px;"></div>
+            <div class="detail-info" style="flex: 1;">
+                <div class="skeleton" style="height: 2.5rem; width: 70%; margin-bottom: 1rem;"></div>
+                <div class="skeleton" style="height: 1.2rem; width: 40%; margin-bottom: 1.5rem;"></div>
+                <div class="skeleton" style="height: 100px; width: 100%; margin-bottom: 1.5rem;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="skeleton" style="height: 45px; width: 150px; border-radius: 6px;"></div>
+                    <div class="skeleton" style="height: 45px; width: 150px; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
     const novel = await fetchNovelDetail(novelId);
 
     if (novel) {
@@ -580,6 +599,10 @@ async function displayNovelDetail() {
         // Logika Penanda Bab Terakhir untuk tombol utama
         const lastChapterId = localStorage.getItem(`bookmark_${novel.id}`);
         const chapters = novel.chapters || [];
+        
+        const sortedChapters = [...chapters];
+        if (window.chapterSortOrder === 'desc') sortedChapters.reverse();
+
         const startChapterId = lastChapterId || (chapters.length > 0 ? chapters[0].id : null);
         const readBtnText = lastChapterId ? 'Lanjutkan Membaca' : 'Mulai Membaca';
 
@@ -595,7 +618,7 @@ async function displayNovelDetail() {
                     </div>
                     <div class="synopsis">
                         <h3>Sinopsis</h3>
-                        <p id="synopsis-content" class="synopsis-content">${novel.description}</p>
+                        <p id="synopsis-content" class="synopsis-content">${escapeHTML(novel.description || "").replace(/\n/g, '<br>')}</p>
                         <button id="read-more-btn" class="read-more-btn" style="display: none;">Baca Selengkapnya</button>
                     </div>
                     <div style="display: flex; gap: 10px;">
@@ -630,9 +653,15 @@ async function displayNovelDetail() {
             </div>
 
             <div class="chapter-section">
-                <h3>Daftar Bab</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Daftar Bab</h3>
+                    <button id="sort-chapters-btn" class="btn-action" style="font-size: 0.8rem; padding: 5px 12px; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas ${window.chapterSortOrder === 'asc' ? 'fa-sort-amount-down-alt' : 'fa-sort-amount-up'}"></i> 
+                        ${window.chapterSortOrder === 'asc' ? 'Terlama' : 'Terbaru'}
+                    </button>
+                </div>
                 <ul class="chapter-list">
-                    ${chapters.map(ch => {
+                    ${sortedChapters.map(ch => {
                         const isRead = readChapters.includes(ch.id);
                         return `
                             <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${ch.id}'">
@@ -650,6 +679,15 @@ async function displayNovelDetail() {
 
         // Setup interaksi rating
         setupRating(novelId);
+
+        // Setup tombol urutan bab
+        const sortBtn = document.getElementById('sort-chapters-btn');
+        if (sortBtn) {
+            sortBtn.addEventListener('click', () => {
+                window.chapterSortOrder = window.chapterSortOrder === 'asc' ? 'desc' : 'asc';
+                displayNovelDetail();
+            });
+        }
 
         // Setup tombol Baca Selengkapnya jika teks terlalu panjang
         const synopsisContent = document.getElementById('synopsis-content');
@@ -678,6 +716,24 @@ async function displayReadingContent() {
     const novelId = parseInt(params.get('novelId'));
     const chapterId = parseInt(params.get('chapterId'));
 
+    // UI/UX: Tampilkan Skeleton Content saat memuat isi bab
+    readContainer.innerHTML = `
+        <div class="read-header" style="border:none;">
+            <div class="skeleton" style="height: 1.5rem; width: 50%; margin: 0 auto 10px;"></div>
+            <div class="skeleton" style="height: 2rem; width: 70%; margin: 0 auto 20px;"></div>
+        </div>
+        <div class="read-content">
+            <div class="skeleton" style="height: 1.2rem; width: 100%; margin-bottom: 1.2rem;"></div>
+            <div class="skeleton" style="height: 1.2rem; width: 95%; margin-bottom: 1.2rem;"></div>
+            <div class="skeleton" style="height: 1.2rem; width: 98%; margin-bottom: 1.2rem;"></div>
+            <div class="skeleton" style="height: 1.2rem; width: 90%; margin-bottom: 1.2rem;"></div>
+            <div class="skeleton" style="height: 1.2rem; width: 93%; margin-bottom: 1.2rem;"></div>
+        </div>
+    `;
+
+    // Hentikan suara yang sedang berjalan jika user berpindah bab dengan cepat
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
     const novel = await fetchNovelDetail(novelId);
     if (!novel) return;
 
@@ -696,7 +752,8 @@ async function displayReadingContent() {
         `;
 
         // Hitung estimasi waktu baca (asumsi rata-rata 200 kata per menit)
-        const wordCount = (chapter.content || "").trim().split(/\s+/).length;
+        const words = (chapter.content || "").trim().split(/\s+/).filter(w => w.length > 0);
+        const wordCount = words.length;
         const readingTime = Math.ceil(wordCount / 200);
 
         // Simpan ke Riwayat Membaca
