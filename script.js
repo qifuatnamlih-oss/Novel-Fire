@@ -11,29 +11,38 @@ window.googleTranslateElementInit = function() {
 // Data novel dalam bentuk Array of Objects
 window.novels = window.novels || [];
 
+let supabaseInitPromise = null;
+
 // Fungsi Inisialisasi Supabase secara Async
 async function initSupabase() {
-    try {
-        // Cek jika sudah diinisialisasi sebagai instance (bukan library)
-        if (window.supabase && typeof window.supabase.createClient !== 'function' && typeof window.supabase.from === 'function') {
-            return true;
-        }
+    if (supabaseInitPromise) return supabaseInitPromise;
 
-        const response = await fetch('/api/get-config');
-        const config = await response.json();
-        
-        // Gunakan referensi library secara hati-hati agar tidak tertukar dengan instance
-        const lib = window.supabase;
-        if (lib && typeof lib.createClient === 'function') {
-            window.supabase = lib.createClient(config.url, config.key, {
-                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-            });
-            return true;
+    supabaseInitPromise = (async () => {
+        try {
+            // Cek jika sudah diinisialisasi sebagai instance
+            if (window.supabase && typeof window.supabase.createClient !== 'function' && typeof window.supabase.from === 'function') {
+                return true;
+            }
+
+            const response = await fetch('/api/get-config');
+            if (!response.ok) throw new Error("Gagal mengambil konfigurasi");
+            const config = await response.json();
+            
+            const lib = window.supabase;
+            if (lib && typeof lib.createClient === 'function') {
+                window.supabase = lib.createClient(config.url, config.key, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+                });
+                return true;
+            }
+        } catch (error) {
+            console.error("Gagal menginisialisasi Supabase:", error);
+            supabaseInitPromise = null; // Reset agar bisa dicoba lagi
         }
-    } catch (error) {
-        console.error("Gagal menginisialisasi Supabase:", error);
-    }
-    return false;
+        return false;
+    })();
+
+    return supabaseInitPromise;
 }
 
 // --- LOGIKA AUTH & PROFIL ---

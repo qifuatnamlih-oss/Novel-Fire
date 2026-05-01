@@ -23,12 +23,9 @@
 
 /* Dark Mode Variables Override */
 body.dark-mode {
-    --light-bg: #0f172a; /* Deep Slate Blue-Black */
     --light-bg: #020617; /* Lebih gelap untuk kedalaman */
     --text-color: #f1f5f9;
-    --white: #1e293b; /* Elevated Grey-Blue */
-    --dark-bg: #020617; /* Header background in dark mode */
-    --white: #0f172a; /* Permukaan kartu (elevated) */
+    --white: #0f172a; /* Permukaan kartu (elevated) di dark mode */
     --dark-bg: #020617;
     --nav-bg: #0f172a;  /* Nav background in dark mode */
     --shadow-soft: 0 10px 25px rgba(0,0,0,0.5);

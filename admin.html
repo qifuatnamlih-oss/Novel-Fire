@@ -807,11 +807,13 @@
             const initialized = await initSupabase();
             if (!initialized) return;
 
-            await loadGlobalData();
-            renderAdminNovels();
-            
-            await checkSession();
-            
+            await checkSession(); // Cek sesi dulu sebelum memuat data sensitif
+
+            if (document.getElementById('admin-content').style.display !== 'none') {
+                await loadGlobalData();
+                renderAdminNovels();
+            }
+
             renderCommentModeration(); // Panggil pertama kali tanpa filter
             renderBannedUsers();
 
