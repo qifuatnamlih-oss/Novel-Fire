@@ -20,7 +20,7 @@ async function initSupabase() {
     supabaseInitPromise = (async () => {
         try {
             // Cek jika sudah diinisialisasi sebagai instance
-            if (window.supabase && typeof window.supabase.createClient !== 'function' && typeof window.supabase.from === 'function') {
+            if (window.supabase && typeof window.supabase.from === 'function' && typeof window.supabase.createClient !== 'function') {
                 return true;
             }
 
@@ -28,7 +28,7 @@ async function initSupabase() {
             if (!response.ok) throw new Error("Gagal mengambil konfigurasi");
             const config = await response.json();
             
-            const lib = window.supabase;
+            const lib = typeof supabase !== 'undefined' ? supabase : window.supabase;
             if (lib && typeof lib.createClient === 'function') {
                 window.supabase = lib.createClient(config.url, config.key, {
                     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -95,7 +95,7 @@ function updateAuthUI() {
         const isAdmin = currentUser.user_metadata?.role === 'admin';
         authBtn.innerHTML = `
             <div class="user-profile-nav" onclick="toggleUserMenu()">
-                <img src="${currentUser.user_metadata.avatar_url || 'https://via.placeholder.com/30'}" class="nav-avatar">
+                <img src="${currentUser.user_metadata.avatar_url || 'https://placehold.co/30'}" class="nav-avatar">
                 <span class="notification-badge" id="noti-badge" style="display:none;"></span>
             </div>
             <div id="user-menu" class="user-menu-dropdown" style="display:none;">

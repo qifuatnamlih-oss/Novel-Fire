@@ -542,7 +542,7 @@
             if (!confirm('Hapus bab ini?')) return;
             const novel = novels.find(n => n.id === activeNovelIdForChapters);
             const updatedChapters = novel.chapters.filter(ch => ch.id !== chapterId);
-            const { error } = await supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
+            const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
             if (error) alert(error.message);
             else {
                 await loadGlobalData();
