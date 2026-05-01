@@ -332,13 +332,21 @@
         let activeNovelIdForChapters = null;
 
         // --- LOGIKA MANAJEMEN BAB ---
-        window.openChapterManager = function(novelId) {
+        window.openChapterManager = async function(novelId) {
             activeNovelIdForChapters = novelId;
-            const novel = novels.find(n => n.id === novelId);
-            if (!novel) return;
+            document.getElementById('chapter-manager-card').style.display = 'block';
+            document.getElementById('chapter-mgr-title').innerText = `Memuat Data...`;
+            document.getElementById('chapter-admin-list').innerHTML = '<p style="text-align:center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Mengambil daftar bab dari database...</p>';
+
+            // Gunakan fetchNovelDetail dari script.js untuk mengambil data lengkap termasuk chapters
+            const novel = await fetchNovelDetail(novelId);
+            if (!novel) {
+                alert("Gagal memuat detail novel atau novel tidak ditemukan.");
+                closeChapterManager();
+                return;
+            }
 
             document.getElementById('chapter-mgr-title').innerText = `Kelola Bab: ${novel.title}`;
-            document.getElementById('chapter-manager-card').style.display = 'block';
             renderChapterList(novel.chapters || []);
             window.scrollTo({ top: document.getElementById('chapter-manager-card').offsetTop - 20, behavior: 'smooth' });
         };
@@ -617,7 +625,7 @@
 
             let allComments = comments.map(c => {
                 const novel = (window.novels || []).find(n => n.id === c.novel_id);
-                const chapter = (novel && novel.chapters) ? novel.chapters.find(ch => ch.id === c.chapter_id) : null;
+                const chapter = (novel && Array.isArray(novel.chapters)) ? novel.chapters.find(ch => ch.id === c.chapter_id) : null;
                 return {
                     ...c,
                     novelTitle: novel ? novel.title : 'Novel Terhapus',
