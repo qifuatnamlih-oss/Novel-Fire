@@ -9,7 +9,7 @@ window.googleTranslateElementInit = function() {
 }
 
 // Data novel dalam bentuk Array of Objects
-window.novels = window.novels || [];
+if (typeof window.novels === 'undefined') window.novels = [];
 
 window.chapterSortOrder = window.chapterSortOrder || 'asc';
 
@@ -216,7 +216,7 @@ async function loadGlobalData(options = {}) {
         if (error) throw error;
         
         // Gabungkan dengan data lokal tanpa duplikasi
-        const existingIds = new Set(window.novels.map(n => n.id));
+        const existingIds = new Set((window.novels || []).map(n => n.id));
         const newItems = (data || []).filter(item => !existingIds.has(item.id));
         window.novels = [...window.novels, ...newItems];
 
@@ -259,7 +259,8 @@ async function fetchNovelDetail(id) {
 
 // Sortir ID untuk memastikan ID unik jika admin menambah novel baru
 const getNextNovelId = () => {
-    return novels.length > 0 ? Math.max(...novels.map(n => n.id)) + 1 : 1;
+    const list = window.novels || [];
+    return list.length > 0 ? Math.max(...list.map(n => n.id)) + 1 : 1;
 };
 
 // Helper untuk mencegah XSS (Sanitasi input user)
