@@ -30,9 +30,18 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+    
+    if (data.error) {
+      return res.status(200).json({ refinedContent: content, error: data.error.message });
+    }
+
+    if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+      return res.status(200).json({ refinedContent: content, warning: 'AI tidak memberikan hasil, menggunakan teks asli.' });
+    }
+
     const refinedText = data.candidates[0].content.parts[0].text;
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
-    res.status(500).json({ error: 'Gagal memproses teks dengan AI' });
+    res.status(200).json({ refinedContent: content, error: 'Gagal memproses teks dengan AI' });
   }
 }

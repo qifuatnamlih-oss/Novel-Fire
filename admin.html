@@ -120,6 +120,9 @@
                 <div id="bulk-upload-status" style="margin-bottom: 10px; text-align: center; font-style: italic; color: #888; display: none;">
                     <i class="fas fa-spinner fa-spin"></i> Memuat...
                 </div>
+                <div id="bulk-progress-container" style="display: none; height: 10px; background: #eee; border-radius: 5px; margin-bottom: 15px; overflow: hidden;">
+                    <div id="bulk-progress-bar" style="height: 100%; width: 0%; background: var(--primary-color); transition: width 0.3s;"></div>
+                </div>
                 <button onclick="handleBulkChapterUpload()" id="bulk-upload-btn" class="btn-admin" style="background: #673ab7; margin-top: 10px; width: 100%;">Proses Upload Masal</button>
             </div>
 
@@ -366,10 +369,13 @@
             const fileInput = document.getElementById('bulk-chapter-file');
             const file = fileInput.files[0];
             const statusDiv = document.getElementById('bulk-upload-status');
-            const statusIcon = statusDiv.querySelector('.fa-spinner');
+            const progressBar = document.getElementById('bulk-progress-bar');
+            const progressContainer = document.getElementById('bulk-progress-container');
 
             // Tampilkan status dan nonaktifkan tombol
             statusDiv.style.display = 'block';
+            if (progressContainer) progressContainer.style.display = 'block';
+            if (progressBar) progressBar.style.width = '0%';
             statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai proses...';
             bulkUploadBtn.disabled = true;
             
@@ -426,6 +432,10 @@
                         if (aiData.refinedContent) content = aiData.refinedContent;
                     } catch (e) { console.error("AI Refine gagal untuk bab ini", e); }
                 }
+                
+                if (progressBar) progressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
+                // Jeda 1 detik jika menggunakan AI untuk menghindari Rate Limit
+                if (useAI && segments.length > 1) await new Promise(r => setTimeout(r, 1000));
 
                 newChapters.push({
                     id: baseId + i,
@@ -435,14 +445,14 @@
             }
 
             // Set 100% setelah loop selesai
-            progressBar.style.width = '100%';
+            if (progressBar) progressBar.style.width = '100%';
             statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyiapkan unggahan...`;
 
             // Logika pendeteksian jumlah bab
             if (newChapters.length === 0) {
                 alert("Format tidak dikenali. Pastikan file menggunakan '### Judul' sebagai pemisah.");
                 statusDiv.style.display = 'none';
-                progressContainer.style.display = 'none';
+                if (progressContainer) progressContainer.style.display = 'none';
                 bulkUploadBtn.disabled = false;
                 return;
             }
@@ -469,7 +479,7 @@
             }
             // Aktifkan tombol kembali dan sembunyikan status setelah beberapa saat
             bulkUploadBtn.disabled = false;
-            setTimeout(() => { statusDiv.style.display = 'none'; progressContainer.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
+            setTimeout(() => { statusDiv.style.display = 'none'; if (progressContainer) progressContainer.style.display = 'none'; statusDiv.innerHTML = ''; }, 3000);
         };
 
         window.editChapter = function(chapterId) {
