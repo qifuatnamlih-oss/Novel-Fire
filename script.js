@@ -232,7 +232,9 @@ async function loadGlobalData(options = {}) {
  * Mengambil detail lengkap satu novel hanya saat dibutuhkan (Lazy Loading).
  */
 async function fetchNovelDetail(id) {
-    const local = window.novels.find(n => n.id === id);
+    if (!window.novels) window.novels = [];
+    
+    const local = (window.novels || []).find(n => n.id === id);
     // Jika sudah ada chapters, tidak perlu fetch lagi
     if (local && local.chapters) return local;
 
