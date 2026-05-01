@@ -6,6 +6,11 @@ export default async function handler(req, res) {
   const { content, customPrompt } = req.body;
   const API_KEY = process.env.GEMINI_API_KEY; // Tambahkan key ini di Vercel Env
 
+  if (!API_KEY) {
+    console.error("Missing GEMINI_API_KEY");
+    return res.status(200).json({ refinedContent: content, error: 'Konfigurasi API Key tidak ditemukan' });
+  }
+
   let prompt = `
     Perbaiki teks novel berikut menjadi Bahasa Indonesia yang baik, benar, dan mengalir (literer).
     Ketentuan:
@@ -27,7 +32,7 @@ export default async function handler(req, res) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = result.response;
     const refinedText = response.text();
 
     if (!refinedText) {
@@ -36,7 +41,8 @@ export default async function handler(req, res) {
 
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
-    console.error("Gemini Error:", error);
+    // Jika limit tercapai atau error lain, kembalikan konten asli agar proses tetap jalan
+    console.error("Gemini API Error details:", error.message || error);
     res.status(200).json({ refinedContent: content, error: 'Gagal memproses teks dengan AI' });
   }
 }

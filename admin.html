@@ -423,19 +423,29 @@
                 // Jika AI Aktif, kirim ke serverless function
                 if (useAI) {
                     try {
-                        const aiRes = await fetch('/api/refine-content', {
+                        const aiRes = await fetch('/api/refine-content', { 
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ content, customPrompt: customAiPrompt })
                         });
-                        const aiData = await aiRes.json();
-                        if (aiData.refinedContent) content = aiData.refinedContent;
-                    } catch (e) { console.error("AI Refine gagal untuk bab ini", e); }
+                        
+                        // Periksa apakah respon sukses dan berupa JSON
+                        const contentType = aiRes.headers.get("content-type");
+                        if (aiRes.ok && contentType && contentType.includes("application/json")) {
+                            const aiData = await aiRes.json();
+                            if (aiData.refinedContent) content = aiData.refinedContent;
+                        } else {
+                            const errorText = await aiRes.text();
+                            console.warn("Server mengembalikan non-JSON:", errorText);
+                        }
+                    } catch (e) { 
+                        console.error("AI Refine gagal untuk bab ini:", e); 
+                    }
                 }
                 
                 if (bulkProgressBar) bulkProgressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
-                // Jeda 1.5 detik jika menggunakan AI untuk menghindari Rate Limit Gemini
-                if (useAI && segments.length > 1) await new Promise(r => setTimeout(r, 1000));
+                // Jeda 2 detik jika menggunakan AI untuk menghindari 429 Too Many Requests
+                if (useAI && i < segments.length - 1) await new Promise(r => setTimeout(r, 2000));
 
                 newChapters.push({
                     id: baseId + i,
