@@ -243,7 +243,7 @@
     <script>
         // --- SISTEM OTENTIKASI SUPABASE ---
         async function checkSession() {
-            if (!window.supabase || !window.supabase.auth) {
+            if (!window.supabase || typeof window.supabase.auth === 'undefined') {
                 console.error("Supabase client belum diinisialisasi.");
                 return;
             }
@@ -804,10 +804,12 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Tunggu data dari Supabase dimuat sebelum render dashboard
-            if (typeof loadGlobalData === 'function') {
-                const success = await loadGlobalData();
-                if (success) renderAdminNovels();
-            }
+            const initialized = await initSupabase();
+            if (!initialized) return;
+
+            await loadGlobalData();
+            renderAdminNovels();
+            
             await checkSession();
             
             renderCommentModeration(); // Panggil pertama kali tanpa filter
@@ -927,11 +929,12 @@
 
         // --- LOGIKA PENGATURAN SOSIAL MEDIA ---
         async function loadSiteSettings() {
+            if (!window.supabase || typeof window.supabase.from !== 'function') return;
             const { data, error } = await window.supabase
                 .from('settings')
                 .select('value')
                 .eq('key', 'site_config')
-                .single();
+                .maybeSingle();
             
             if (data && data.value) {
                 document.getElementById('site-logo-url-hidden').value = data.value.logo_url || '';
@@ -991,11 +994,12 @@
         });
 
         async function loadSocialSettings() {
+            if (!window.supabase || typeof window.supabase.from !== 'function') return;
             const { data, error } = await window.supabase
                 .from('settings')
                 .select('value')
                 .eq('key', 'social_links')
-                .single();
+                .maybeSingle();
             
             if (data && data.value) {
                 document.getElementById('social-fb').value = data.value.facebook || '';

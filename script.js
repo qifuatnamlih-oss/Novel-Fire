@@ -14,6 +14,9 @@ window.novels = window.novels || [];
 // Fungsi Inisialisasi Supabase secara Async
 async function initSupabase() {
     try {
+        // Cek jika sudah diinisialisasi sebagai instance (bukan library)
+        if (window.supabase && typeof window.supabase.from === 'function') return true;
+
         const response = await fetch('/api/get-config');
         const config = await response.json();
         
@@ -172,7 +175,8 @@ async function fetchNotifications() {
  */
 async function loadGlobalData(options = {}) {
     try {
-        if (!window.supabase) return false;
+        // Pastikan window.supabase adalah instance, bukan objek library CDN
+        if (!window.supabase || typeof window.supabase.from !== 'function') return false;
 
         // Default: ambil metadata saja (tanpa chapters/description yang berat)
         const { 
@@ -1246,12 +1250,12 @@ function setupTTS() {
 
 // --- LOGIKA FOOTER DINAMIS ---
 async function loadDynamicFooter() {
-    if (!window.supabase) return;
+    if (!window.supabase || typeof window.supabase.from !== 'function') return;
     const { data } = await window.supabase
         .from('settings')
         .select('value')
         .eq('key', 'social_links')
-        .single();
+        .maybeSingle(); // Menggunakan maybeSingle untuk mencegah error 406 jika data kosong
 
     if (data && data.value) {
         const links = data.value;
@@ -1264,12 +1268,12 @@ async function loadDynamicFooter() {
 
 // --- LOGIKA BRANDING (LOGO) ---
 async function loadSiteConfig() {
-    if (!window.supabase) return;
+    if (!window.supabase || typeof window.supabase.from !== 'function') return;
     const { data } = await window.supabase
         .from('settings')
         .select('value')
         .eq('key', 'site_config')
-        .single();
+        .maybeSingle(); // Menggunakan maybeSingle untuk mencegah error 406 jika data kosong
 
     if (data && data.value && data.value.logo_url) {
         const logoUrl = data.value.logo_url;
