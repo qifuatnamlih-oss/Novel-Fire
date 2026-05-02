@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       // Sesuaikan identifier model dengan hasil 'curl' jika versi 1.5-flash 404.
       // Standar stabil: "gemini-1.5-flash"
       // Berdasarkan curl kamu: "gemini-2.5-flash"
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
