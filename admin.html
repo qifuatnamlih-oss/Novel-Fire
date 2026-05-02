@@ -449,8 +449,8 @@
                 }
                 
                 if (bulkProgressBar) bulkProgressBar.style.width = `${((i + 1) / segments.length) * 100}%`;
-                // Jeda 4.5 detik untuk mematuhi limit 15 RPM Gemini Free Tier
-                if (useAI && i < segments.length - 1) await new Promise(r => setTimeout(r, 4500));
+                // Jeda 5 detik untuk keamanan ekstra agar tidak terkena limit 15 RPM
+                if (useAI && i < segments.length - 1) await new Promise(r => setTimeout(r, 5000));
 
                 newChapters.push({
                     id: baseId + i,

@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
     // Jika limit tercapai atau error lain, kembalikan konten asli agar proses tetap jalan
-    console.error("Gemini API Error details:", error.message || error);
-    res.status(200).json({ refinedContent: content, error: 'Gagal memproses teks dengan AI' });
+    console.error("Gemini API Error:", error.message);
+    res.status(200).json({ refinedContent: content, error: error.message || 'Terjadi kesalahan pada AI' });
   }
 }
