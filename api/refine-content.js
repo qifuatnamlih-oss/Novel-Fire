@@ -18,6 +18,9 @@ export default async function handler(req, res) {
     2. Narasi HARUS menggunakan kata ganti orang ketiga (ia, mereka, [nama tokoh]).
     3. Hapus kata ganti "saya" dan "anda" dari narasi, KECUALI di dalam percakapan/dialog (tanda kutip).
     4. Perbaiki ejaan (PUEBI/EYD) dan buat kalimat yang monoton menjadi lebih bervariasi.
+    5. Jaga agar makna asli tetap utuh, tetapi buatlah teks lebih menarik dan enak dibaca.
+    6. Hindari penggunaan kata "saya" dan "anda" kecuali diperlukan.
+    7. jangan ubah nama tokoh, tempat, istilah atau detail penting lainnya. Fokus pada perbaikan gaya bahasa dan ejaan.
   `;
 
   if (customPrompt) {
