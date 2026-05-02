@@ -29,6 +29,9 @@ export default async function handler(req, res) {
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ 
+      // Sesuaikan identifier model dengan hasil 'curl' jika versi 1.5-flash 404.
+      // Standar stabil: "gemini-1.5-flash"
+      // Berdasarkan curl kamu: "gemini-2.5-flash"
       model: "gemini-1.5-flash",
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -40,12 +43,12 @@ export default async function handler(req, res) {
         temperature: 0.8, // Membuat AI lebih kreatif dalam pemilihan kata
         topP: 0.95,
       }
-    });
+    }); // Menghapus parameter apiVersion kustom agar SDK menentukan default terbaik (v1)
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = result.response;
     
-    if (!response.candidates || response.candidates.length === 0) {
+    if (!response || !response.candidates || response.candidates.length === 0) {
       throw new Error("AI tidak mengembalikan hasil (mungkin konten diblokir).");
     }
 

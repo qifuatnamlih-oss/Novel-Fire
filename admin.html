@@ -434,7 +434,7 @@
                         if (aiRes.ok && contentType && contentType.includes("application/json")) {
                             const aiData = await aiRes.json();
                             if (aiData.error) {
-                                console.error(`Bab ${i+1} AI Error:`, aiData.error);
+                                console.error(`Bab ${i+1} AI Error [${aiRes.status}]:`, aiData.error);
                             } else if (aiData.refinedContent) {
                                 console.log(`Bab ${i+1} berhasil diperbaiki oleh AI.`);
                                 content = aiData.refinedContent;
