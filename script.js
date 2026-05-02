@@ -1378,7 +1378,7 @@ function setupDownloadTTS(content, title) {
         if (isDownloadMode) {
             dlBtn.classList.add('active');
             dlBtn.innerHTML = '<i class="fas fa-times"></i> Batal';
-            showToast("🎯 Mode Download: Klik paragraf yang ingin diunduh.");
+            showToast("🎯 Mode Download: Klik ikon 📥 di akhir paragraf untuk mengunduh.");
             contentArea.classList.add('download-mode-active');
         } else {
             resetDownloadMode();
