@@ -1178,6 +1178,23 @@ function setupTTS() {
     let paragraphElements = Array.from(contentArea.querySelectorAll('p[data-paragraph-index]'));
     let currentUtterance = null;
     let sleepTimeout = null;
+    let wakeLock = null;
+
+    // Fungsi untuk meminta Wake Lock agar layar tidak mati
+    const requestWakeLock = async () => {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) { console.error("Gagal mengaktifkan Wake Lock:", err); }
+        }
+    };
+
+    // Fungsi untuk melepas Wake Lock
+    const releaseWakeLock = () => {
+        if (wakeLock) {
+            wakeLock.release().then(() => wakeLock = null);
+        }
+    };
 
     // Muat preferensi kecepatan dari LocalStorage
     const savedSpeed = localStorage.getItem('ttsSpeed');
@@ -1212,6 +1229,7 @@ function setupTTS() {
 
     const stopTTS = () => {
         if (sleepTimeout) clearTimeout(sleepTimeout);
+        releaseWakeLock();
         synth.cancel();
         isSpeaking = false;
         isPaused = false;
@@ -1273,15 +1291,18 @@ function setupTTS() {
     ttsBtn.addEventListener('click', () => {
         if (isSpeaking) {
             if (synth.paused) {
+                requestWakeLock(); // Aktifkan kembali saat resume
                 synth.resume();
                 isPaused = false;
             } else {
+                releaseWakeLock(); // Lepas saat pause untuk hemat baterai
                 synth.pause();
                 isPaused = true;
             }
         } else {
             stopTTS();
             currentParagraphIndex = 0;
+            requestWakeLock(); // Aktifkan saat mulai membaca
             speakCurrentParagraph();
             
             // Mulai timer jika sudah diset sebelumnya
@@ -1341,6 +1362,59 @@ async function loadDynamicFooter() {
         if (document.getElementById('footer-ig')) document.getElementById('footer-ig').href = links.instagram || '#';
         if (document.getElementById('footer-ds')) document.getElementById('footer-ds').href = links.discord || '#';
     }
+}
+
+// --- LOGIKA DOWNLOAD TTS (EXPERIMENTAL) ---
+function setupDownloadTTS(content, title) {
+    const dlBtn = document.getElementById('tts-download');
+    const contentArea = document.querySelector('.read-content');
+    if (!dlBtn || !contentArea) return;
+
+    let isDownloadMode = false;
+
+    dlBtn.addEventListener('click', () => {
+        isDownloadMode = !isDownloadMode;
+        
+        if (isDownloadMode) {
+            dlBtn.classList.add('active');
+            dlBtn.innerHTML = '<i class="fas fa-times"></i> Batal';
+            showToast("🎯 Mode Download: Klik paragraf yang ingin diunduh.");
+            contentArea.classList.add('download-mode-active');
+        } else {
+            resetDownloadMode();
+        }
+    });
+
+    function resetDownloadMode() {
+        isDownloadMode = false;
+        dlBtn.classList.remove('active');
+        dlBtn.innerHTML = '<i class="fas fa-download"></i> MP3';
+        contentArea.classList.remove('download-mode-active');
+    }
+
+    contentArea.addEventListener('click', (e) => {
+        if (!isDownloadMode) return;
+        
+        const p = e.target.closest('p[data-paragraph-index]');
+        if (p) {
+            const text = p.innerText.trim();
+            if (text.length === 0) return;
+
+            // Limit Google TTS adalah ~200 karakter. Kita ambil potongan paragraf tersebut.
+            const snippet = text.substring(0, 200);
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(snippet)}&tl=id&client=tw-ob`;
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showToast(`📥 Memproses MP3 untuk paragraf ${parseInt(p.dataset.paragraphIndex) + 1}...`);
+            resetDownloadMode();
+        }
+    });
 }
 
 // --- LOGIKA BRANDING (LOGO) ---

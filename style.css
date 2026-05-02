@@ -1515,3 +1515,17 @@ footer {
     padding: 8px 0;
     text-decoration: none;
 }
+
+/* Mode Download Active Visuals */
+.read-content.download-mode-active p {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    position: relative;
+}
+
+.read-content.download-mode-active p:hover {
+    background-color: rgba(232, 73, 29, 0.1);
+    outline: 2px dashed var(--primary-color);
+    padding-left: 10px;
+}
