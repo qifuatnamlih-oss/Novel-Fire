@@ -12,43 +12,47 @@ export default async function handler(req, res) {
   }
 
   let prompt = `
-    Perbaiki teks novel berikut menjadi Bahasa Indonesia yang baik, benar, dan mengalir (literer).
-    Ketentuan:
-    1. Hindari penggunaan kata ganti "saya" dan "anda" dalam narasi. 
-    2. Gunakan kata ganti orang ketiga (ia, mereka) atau struktur kalimat pasif yang elegan jika memungkinkan.
-    3. Kata "saya" dan "anda" HANYA diperbolehkan jika berada di dalam tanda kutip dialog ("...").
-    4. Jangan mengubah makna cerita, hanya perbaiki gaya bahasa dan tata bahasa (EYD/PUEBI).
-    
+    Tugas: Bertindaklah sebagai editor novel profesional. Tulis ulang dan perbaiki teks novel di bawah ini.
+    Instruksi Wajib:
+    1. Gunakan gaya bahasa naratif yang elegan, mengalir, dan puitis (literer).
+    2. Narasi HARUS menggunakan kata ganti orang ketiga (ia, mereka, [nama tokoh]).
+    3. Hapus kata ganti "saya" dan "anda" dari narasi, KECUALI di dalam percakapan/dialog (tanda kutip).
+    4. Perbaiki ejaan (PUEBI/EYD) dan buat kalimat yang monoton menjadi lebih bervariasi.
   `;
 
   if (customPrompt) {
     prompt += `\nInstruksi Tambahan Khusus: ${customPrompt}\n`;
   }
 
-  prompt += `\nTeks yang harus diperbaiki:\n${content}`;
+  prompt += `\n\nTEKS NOVEL UNTUK DIPERBAIKI:\n${content}`;
 
   try {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      // Longgarkan filter keamanan agar tidak mudah memicu error "Blocked" pada konten novel
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-      ]
+      ],
+      generationConfig: {
+        temperature: 0.8, // Membuat AI lebih kreatif dalam pemilihan kata
+        topP: 0.95,
+      }
     });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     
-    // Cek apakah ada hasil yang dikembalikan
     if (!response.candidates || response.candidates.length === 0) {
       throw new Error("AI tidak mengembalikan hasil (mungkin konten diblokir).");
     }
 
     const refinedText = response.text();
+    
+    // Tambahkan log di server untuk verifikasi (bisa dilihat di Vercel Dashboard)
+    console.log("AI Berhasil memproses teks.");
     res.status(200).json({ refinedContent: refinedText });
   } catch (error) {
     // Jika limit tercapai atau error lain, kembalikan konten asli agar proses tetap jalan

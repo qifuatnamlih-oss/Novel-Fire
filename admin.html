@@ -433,9 +433,15 @@
                         const contentType = aiRes.headers.get("content-type");
                         if (aiRes.ok && contentType && contentType.includes("application/json")) {
                             const aiData = await aiRes.json();
-                            if (aiData.refinedContent) content = aiData.refinedContent;
+                            if (aiData.error) {
+                                console.error(`Bab ${i+1} AI Error:`, aiData.error);
+                            } else if (aiData.refinedContent) {
+                                console.log(`Bab ${i+1} berhasil diperbaiki oleh AI.`);
+                                content = aiData.refinedContent;
+                            }
                         } else {
-                            console.warn("Server error (500) atau Timeout. Menggunakan teks asli.");
+                            const errorMsg = await aiRes.text();
+                            console.warn(`Bab ${i+1} Gagal (Server Error):`, errorMsg);
                         }
                     } catch (e) { 
                         console.error("AI Refine gagal untuk bab ini:", e); 
