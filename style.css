@@ -1,10 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap');
+
 /* Global Box Sizing Reset */
 *, *::before, *::after {
     box-sizing: border-box;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap');
 
 :root {
     --primary-color: #e8491d;
