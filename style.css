@@ -1456,14 +1456,12 @@ footer {
         padding: 15px 0;
     }
 
-    .hero {
-        padding: 30px 20px;
+    .novel-hero .hero-content {
+        grid-template-columns: 1fr; /* Ubah ke satu kolom di mobile */
+        gap: 24px;
+        text-align: center; /* Pusatkan teks di mobile */
     }
 
-    .search-bar {
-        flex-direction: column;
-        gap: 15px;
-    }
 
     .search-bar input,
     .search-bar button {
@@ -1497,15 +1495,9 @@ footer {
         margin-left: 0 !important;
     }
 
-    .read-navigation {
-        flex-direction: column;
-        gap: 10px;
+    .novel-hero .hero-cover img {
+        max-width: 220px; /* Ukuran cover lebih kecil di mobile */
     }
-
-    .read-navigation button {
-        width: 100%;
-    }
-
     footer {
         padding: 20px;
     }

@@ -1661,6 +1661,73 @@ function setupSmartNav() {
     }, { passive: true });
 }
 
+// --- LOGIKA SLIDESHOW HERO SECTION ---
+let heroSlideshowInterval;
+let currentHeroSlideIndex = 0;
+let popularNovelsForSlideshow = [];
+
+async function startHeroSlideshow() {
+    const heroBgImage = document.getElementById('hero-bg-image');
+    const trendingNowButton = document.getElementById('trending-now-button');
+    if (!heroBgImage || !trendingNowButton) return;
+
+    // Ambil 5 novel teratas berdasarkan reading_count
+    const { data, error } = await window.supabase
+        .from('novels')
+        .select('id, title, image, reading_count')
+        .order('reading_count', { ascending: false, nullsFirst: false }) // Urutkan dari tertinggi, null di akhir
+        .limit(5);
+
+    if (error) {
+        console.error("Gagal mengambil novel populer untuk slideshow:", error.message);
+        // Fallback ke gambar statis jika gagal fetch
+        heroBgImage.src = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200';
+        heroBgImage.classList.add('active');
+        trendingNowButton.href = '#'; // Tidak ada novel spesifik
+        return;
+    }
+
+    popularNovelsForSlideshow = (data || []).filter(n => n.image); // Saring novel tanpa gambar
+
+    if (popularNovelsForSlideshow.length === 0) {
+        // Jika tidak ada novel populer, gunakan gambar fallback
+        heroBgImage.src = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=1200';
+        heroBgImage.classList.add('active');
+        trendingNowButton.href = '#';
+        return;
+    }
+
+    const updateSlide = () => {
+        const novel = popularNovelsForSlideshow[currentHeroSlideIndex];
+        
+        // Preload gambar agar transisi mulus
+        const img = new Image();
+        img.src = novel.image;
+        img.onload = () => {
+            // Efek fade out singkat dengan menghapus kelas active
+            heroBgImage.classList.remove('active');
+            
+            setTimeout(() => {
+                heroBgImage.src = novel.image;
+                heroBgImage.classList.add('active');
+            }, 100);
+        };
+        img.onerror = () => {
+            console.warn(`Gagal memuat gambar untuk novel ${novel.title}: ${novel.image}`);
+            // Fallback ke placeholder jika gambar gagal dimuat
+            heroBgImage.src = 'https://via.placeholder.com/1200x800?text=NovelFire';
+            heroBgImage.classList.add('active');
+        };
+
+        trendingNowButton.href = `detail.html?id=${novel.id}`;
+        
+        currentHeroSlideIndex = (currentHeroSlideIndex + 1) % popularNovelsForSlideshow.length;
+    };
+
+    updateSlide(); // Jalankan slide pertama segera
+    heroSlideshowInterval = setInterval(updateSlide, 5000); // Ganti setiap 5 detik
+}
+
 // Fungsi Admin: Kelola Data Global (Export/Import)
 function exportAllData() {
     const data = {
@@ -1740,6 +1807,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayLatestUpdates();
         setupSearch();
         updateAndDisplayStats(); // Jalankan statistik di halaman utama
+        startHeroSlideshow(); // Mulai slideshow di halaman utama
     }
     if (document.getElementById('novel-detail')) {
         await displayNovelDetail();
