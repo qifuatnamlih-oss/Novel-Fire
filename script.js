@@ -296,16 +296,19 @@ function renderNovelCard(novel) {
 
     return `
         <div class="novel-card" onclick="location.href='${targetUrl}'" title="${escapeHTML(novel.title)}">
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
-                <i class="fas fa-heart"></i>
-            </button>
-            <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy" onerror="this.src='https://placehold.co/150x200?text=No+Cover'">
-            <h3>${escapeHTML(novel.title)}</h3>
-            <p class="author-link" style="font-size: 0.8rem; color: var(--primary-color); margin: -5px 0 5px; cursor: pointer;" onclick="filterByAuthor('${escapeHTML(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
-                ${novel.author || 'Anonim'}
-            </p>
-            <div class="rating">${stars}</div>
-            <p style="font-size: 0.85rem; color: #888;"><strong>${novel.category}</strong> • ${novel.genre}</p>
+            <div style="position:relative; overflow:hidden; border-radius:8px;">
+                <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <img src="${novel.image}" alt="Cover ${novel.title}" loading="lazy" onerror="this.src='https://placehold.co/150x200?text=No+Cover'">
+            </div>
+            <h3 style="font-size: 1rem; margin: 12px 0 5px; line-height: 1.3; height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${escapeHTML(novel.title)}</h3>
+            <div style="margin-top: auto;">
+                <p class="author-link" style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-bottom: 5px;" onclick="filterByAuthor('${escapeHTML(novel.author || 'Anonim').replace(/'/g, "\\'")}', event)">
+                    ${novel.author || 'Anonim'}
+                </p>
+                <div class="rating" style="font-size: 0.75rem;">${stars}</div>
+            </div>
         </div>
     `;
 }
@@ -614,73 +617,90 @@ async function displayNovelDetail() {
         const readBtnText = lastChapterId ? 'Lanjutkan Membaca' : 'Mulai Membaca';
 
         detailContainer.innerHTML = `
-            <div class="detail-header">
-                <img src="${novel.image}" alt="${novel.title}">
-                <div class="detail-info">
-                    <h1>${novel.title}</h1>
-                    <p style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); margin-top: -10px;">Penulis: ${novel.author || 'Anonim'}</p>
-                    <div style="margin: 10px 0;">
-                        <span class="tag">${novel.category}</span>
-                        <span style="margin-left: 10px; color: #888;">${novel.genre}</span>
+            <section class="novel-hero">
+                <div class="container hero-content">
+                    <div class="hero-cover">
+                        <img src="${novel.image}" alt="${novel.title}">
                     </div>
-                    <div class="synopsis">
-                        <h3>Sinopsis</h3>
+                    <div class="hero-info">
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px; justify-content: inherit;">
+                            <span class="tag">${novel.category}</span>
+                            <span class="tag" style="background: var(--nav-bg);">${novel.genre}</span>
+                        </div>
+                        <h1>${novel.title}</h1>
+                        <p style="font-size: 1.1rem; opacity: 0.8;">Oleh: <strong>${novel.author || 'Anonim'}</strong></p>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 25px; justify-content: inherit; flex-wrap: wrap;">
+                            <button class="btn-read" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${startChapterId}'">
+                                <i class="fas fa-play"></i> ${readBtnText}
+                            </button>
+                            <button class="btn-fav-detail ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id})">
+                                <i class="fas fa-heart"></i> ${isFav ? 'Dafavorit' : 'Tambah Favorit'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="container detail-layout">
+                <div class="main-column">
+                    <section class="info-card">
+                        <h3><i class="fas fa-book-open" style="color:var(--primary-color)"></i> Sinopsis</h3>
                         <p id="synopsis-content" class="synopsis-content">${escapeHTML(novel.description || "").replace(/\n/g, '<br>')}</p>
                         <button id="read-more-btn" class="read-more-btn" style="display: none;">Baca Selengkapnya</button>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-read" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${startChapterId}'">
-                            ${readBtnText}
-                        </button>
-                        <button class="btn-fav-detail ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id})">
-                            <i class="fas fa-heart"></i> ${isFav ? 'Favorit' : 'Tambah Favorit'}
-                        </button>
+                    </section>
+
+                    <section class="chapter-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0;"><i class="fas fa-list-ul"></i> Daftar Bab</h3>
+                            <button id="sort-chapters-btn" class="btn-action">
+                                <i class="fas ${window.chapterSortOrder === 'asc' ? 'fa-sort-amount-down-alt' : 'fa-sort-amount-up'}"></i>
+                            </button>
+                        </div>
+                        <ul class="chapter-grid-modern">
+                            ${sortedChapters.map(ch => {
+                                const isRead = readChapters.includes(ch.id);
+                                return `
+                                    <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${ch.id}'">
+                                        <span style="font-size: 0.9rem; font-weight: 600;">${ch.title}</span>
+                                        ${isRead ? '<i class="fas fa-check-circle" style="color:#27ae60"></i>' : '<i class="fas fa-chevron-right" style="opacity:0.3"></i>'}
+                                    </li>
+                                `;
+                            }).join('')}
+                        </ul>
+                    </section>
+                </div>
+
+                <aside class="sidebar-column">
+                    <div class="author-card">
+                        <p style="font-size: 0.7rem; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 15px;">Tentang Penulis</p>
+                        <div class="author-profile">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(novel.author || 'A')}&background=random" class="author-avatar">
+                            <div>
+                                <p style="margin: 0; font-weight: 800;">${novel.author || 'Anonim'}</p>
+                                <p style="margin: 0; font-size: 0.75rem; color: var(--primary-color);">Verified Creator</p>
+                            </div>
+                        </div>
+                        <button class="btn-action" style="width: 100%; margin-top: 10px;">Ikuti Penulis</button>
                     </div>
 
-                    <div class="rating-input-container">
-                        <span>Berikan Rating: </span>
-                        <div class="stars-input" id="stars-input">
-                            <button class="star-btn" data-value="1"><i class="fas fa-star"></i></button>
-                            <button class="star-btn" data-value="2"><i class="fas fa-star"></i></button>
-                            <button class="star-btn" data-value="3"><i class="fas fa-star"></i></button>
-                            <button class="star-btn" data-value="4"><i class="fas fa-star"></i></button>
-                            <button class="star-btn" data-value="5"><i class="fas fa-star"></i></button>
+                    <div class="info-card">
+                        <p style="font-size: 0.7rem; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 15px;">Statistik Novel</p>
+                        <div class="stars-input" id="stars-input" style="justify-content: center; margin-bottom: 15px;">
+                            ${[1,2,3,4,5].map(v => `<button class="star-btn" data-value="${v}"><i class="fas fa-star"></i></button>`).join('')}
+                        </div>
+                        <div class="stats-grid">
+                            <div>
+                                <p style="margin:0; font-size: 0.7rem; color: #888;">PEMBACA</p>
+                                <p style="margin:0; font-weight: bold;">12.4k</p>
+                            </div>
+                            <div>
+                                <p style="margin:0; font-size: 0.7rem; color: #888;">RATING</p>
+                                <p style="margin:0; font-weight: bold;">4.8/5.0</p>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="share-container">
-                        <span>Bagikan:</span>
-                        <div class="share-buttons">
-                            <a href="https://api.whatsapp.com/send?text=${encodeURIComponent(novel.title + ' - Baca di NovelFire: ' + window.location.href)}" target="_blank" class="share-btn whatsapp" title="Bagikan ke WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                            <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('Sedang membaca ' + novel.title)}&url=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn twitter" title="Bagikan ke Twitter"><i class="fab fa-twitter"></i></a>
-                            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn facebook" title="Bagikan ke Facebook"><i class="fab fa-facebook-f"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chapter-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0;">Daftar Bab</h3>
-                    <button id="sort-chapters-btn" class="btn-action" style="font-size: 0.8rem; padding: 5px 12px; display: flex; align-items: center; gap: 5px;">
-                        <i class="fas ${window.chapterSortOrder === 'asc' ? 'fa-sort-amount-down-alt' : 'fa-sort-amount-up'}"></i> 
-                        ${window.chapterSortOrder === 'asc' ? 'Terlama' : 'Terbaru'}
-                    </button>
-                </div>
-                <ul class="chapter-list">
-                    ${sortedChapters.map(ch => {
-                        const isRead = readChapters.includes(ch.id);
-                        return `
-                            <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${ch.id}'">
-                                <span>
-                                    ${ch.title} 
-                                    ${isRead ? `<span class="read-badge">Sudah Dibaca</span><button class="btn-unread" onclick="markAsUnread(${novel.id}, ${ch.id}, event)" title="Tandai Belum Dibaca"><i class="fas fa-undo"></i></button>` : ''}
-                                </span>
-                                <i class="fas fa-chevron-right"></i>
-                            </li>
-                        `;
-                    }).join('')}
-                </ul>
+                </aside>
             </div>
         `;
 
@@ -780,18 +800,16 @@ async function displayReadingContent() {
             <div class="read-header">
                 <h2>${novel.title}</h2>
                 <h3>${chapter.title}</h3>
-                <p class="reading-time"><i class="far fa-clock"></i> ${readingTime} menit membaca</p>
             </div>
-            <div class="read-navigation top">
-                ${navButtons}
-            </div>
-            <div class="read-actions">
-                <button id="font-size-decrease" class="btn-action" title="Perkecil Font">
-                    <i class="fas fa-minus"></i> Font
-                </button>
-                <button id="font-size-increase" class="btn-action" title="Perbesar Font">
-                    <i class="fas fa-plus"></i> Font
-                </button>
+            <div class="read-actions" style="background: var(--light-bg); padding: 15px; border-radius: 12px; margin-bottom: 30px; border: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 8px;">
+                    <button id="font-size-decrease" class="btn-action" title="Perkecil Font">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button id="font-size-increase" class="btn-action" title="Perbesar Font">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
                 <button id="dark-mode-toggle" class="btn-action" title="Ganti Tema">
                     <i class="fas fa-moon"></i> Tema
                 </button>

@@ -18,11 +18,11 @@
     </header>
 
     <div class="container" id="login-section">
-        <div class="admin-card" style="max-width: 400px; margin: 80px auto; border-top: 5px solid var(--primary-color);">
+        <div class="admin-card" style="max-width: 400px; margin: 80px auto; border-top: 5px solid var(--primary-color); box-shadow: var(--shadow-strong);">
             <h2 style="text-align: center;"><i class="fas fa-user-shield"></i> NovelFire Admin</h2>
             <p style="text-align: center; color: #888; margin-bottom: 25px;">Masukkan kredensial Anda untuk mengelola konten.</p>
             <form id="login-form">
-                <div class="admin-form-group">
+                <div class="admin-form-group" style="margin-bottom: 20px;">
                     <label>Email Admin</label>
                     <input type="email" id="login-email" required>
                 </div>
@@ -37,14 +37,13 @@
     </div>
 
     <div class="container" id="admin-content" style="display: none;">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-            <button onclick="handleLogout()" class="btn-admin btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
+        <nav style="background:none; border:none; margin-bottom: 20px; justify-content: flex-end; padding:0;">
+            <button onclick="handleLogout()" class="btn-admin btn-danger" style="border-radius: 50px; padding: 10px 25px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </nav>
+        
         <div class="admin-card">
             <h2 id="form-title"><i class="fas fa-plus-circle"></i> Tambah Novel Baru</h2>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Isi data di bawah ini untuk menambahkan novel ke dalam database global Supabase.</p>
             <form id="add-novel-form">
-                <input type="hidden" id="adm-id">
                 <div class="admin-form-group">
                     <label>Judul Novel</label>
                     <input type="text" id="adm-title" required>
