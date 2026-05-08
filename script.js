@@ -201,7 +201,7 @@ async function loadGlobalData(options = {}) {
         const { 
             page = 0, 
             limit = 12, 
-            select = 'id, title, category, genre, image, author' 
+            select = 'id, title, category, genre, image, author, chapters, reading_count' // Tambahkan reading_count
         } = options;
 
         const from = page * limit;
@@ -769,6 +769,9 @@ async function displayReadingContent() {
     const chapter = chapters[chapterIndex];
 
     if (chapter) {
+        // Increment reading_count menggunakan RPC (lebih efisien & aman)
+        window.supabase.rpc('increment_reading_count', { novel_id: novelId }).catch(console.error);
+
         const prevChapter = chapters[chapterIndex - 1];
         const nextChapter = chapters[chapterIndex + 1];
 
@@ -1364,6 +1367,56 @@ function setupTTS() {
     }
 }
 
+// --- LOGIKA STATISTIK PENGUNJUNG ---
+async function updateAndDisplayStats() {
+    if (!window.supabase || typeof window.supabase.from !== 'function') return;
+
+    // Pastikan hanya berjalan di halaman utama
+    if (!document.getElementById('novel-grid')) return;
+    const today = new Date().toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+
+    // Cek apakah ini pengunjung baru menggunakan LocalStorage
+    const hasVisited = localStorage.getItem('novelfire_visited');
+    const isNewVisitor = !hasVisited;
+
+    // Ambil data statistik saat ini dari tabel 'settings' dengan key 'site_stats'
+    const { data } = await window.supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'site_stats')
+        .maybeSingle();
+
+    let stats = data?.value || { total_visits: 0, total_visitors: 0, daily: {} };
+    if (!stats.daily) stats.daily = {};
+    if (!stats.daily[today]) stats.daily[today] = { visits: 0, visitors: 0 };
+
+    // Update angka (increment)
+    stats.total_visits = (stats.total_visits || 0) + 1;
+    stats.daily[today].visits = (stats.daily[today].visits || 0) + 1;
+
+    if (isNewVisitor) {
+        stats.total_visitors = (stats.total_visitors || 0) + 1;
+        stats.daily[today].visitors = (stats.daily[today].visitors || 0) + 1;
+        localStorage.setItem('novelfire_visited', 'true');
+    }
+
+    // Opsional: Bersihkan data harian yang lebih tua dari 30 hari agar JSON tidak terlalu besar
+    const days = Object.keys(stats.daily).sort();
+    if (days.length > 30) delete stats.daily[days[0]];
+
+    // Simpan kembali ke Supabase secara asinkron
+    await window.supabase
+        .from('settings')
+        .upsert({ key: 'site_stats', value: stats }, { onConflict: 'key' });
+
+    // Tampilkan ke UI
+    const visitCountElem = document.getElementById('visit-count');
+    const visitorCountElem = document.getElementById('visitor-count');
+    
+    if (visitCountElem) visitCountElem.innerText = (stats.total_visits || 0).toLocaleString('id-ID');
+    if (visitorCountElem) visitorCountElem.innerText = (stats.total_visitors || 0).toLocaleString('id-ID');
+}
+
 // --- LOGIKA FOOTER DINAMIS ---
 async function loadDynamicFooter() {
     if (!window.supabase || typeof window.supabase.from !== 'function') return;
@@ -1686,6 +1739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayHistory();
         displayLatestUpdates();
         setupSearch();
+        updateAndDisplayStats(); // Jalankan statistik di halaman utama
     }
     if (document.getElementById('novel-detail')) {
         await displayNovelDetail();

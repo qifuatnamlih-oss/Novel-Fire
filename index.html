@@ -30,12 +30,18 @@
     <div class="container">
         <!-- Bagian Cari Novel (Hero) sekarang berada di paling atas -->
         <section class="hero">
-            <span style="background: var(--primary-color); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-bottom: 10px;">TRENDING NOW</span>
-            <h2>Jelajahi Dunia Imajinasi</h2>
-            <p style="margin-bottom: 25px; opacity: 0.9; max-width: 600px;">Temukan ribuan cerita seru dari berbagai belahan dunia dalam satu genggaman.</p>
-            <div class="search-bar">
-                <input type="text" id="search-input" placeholder="Masukkan judul novel...">
-                <button id="search-button"><i class="fas fa-search"></i> Cari</button>
+            <div class="hero-background-overlay"></div>
+            <img id="hero-bg-image" class="hero-background-image" src="" alt="Novel Cover">
+            <div class="hero-content-wrapper">
+                <a href="#" id="trending-now-button" class="trending-now-button">
+                    <span class="trending-now-text">TRENDING NOW</span>
+                </a>
+                <h2>Jelajahi Dunia Imajinasi</h2>
+                <p style="margin-bottom: 25px; opacity: 0.9; max-width: 600px;">Temukan ribuan cerita seru dari berbagai belahan dunia dalam satu genggaman.</p>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Masukkan judul novel...">
+                    <button id="search-button"><i class="fas fa-search"></i> Cari</button>
+                </div>
             </div>
         </section>
 
@@ -73,6 +79,10 @@
             <a href="#" id="footer-tw" class="social-icon" title="Twitter"><i class="fab fa-twitter"></i></a>
             <a href="#" id="footer-ig" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
             <a href="#" id="footer-ds" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
+        </div>
+        <div class="site-stats">
+            <span><i class="fas fa-eye"></i> Total Kunjungan: <strong id="visit-count">0</strong></span>
+            <span><i class="fas fa-users"></i> Pengunjung: <strong id="visitor-count">0</strong></span>
         </div>
         <p><a href="admin.html" style="color: #888; text-decoration: none; font-size: 0.8rem;"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
     </footer>

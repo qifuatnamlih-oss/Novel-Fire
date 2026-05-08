@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -41,6 +42,14 @@
             <button onclick="handleLogout()" class="btn-admin btn-danger" style="border-radius: 50px; padding: 10px 25px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </nav>
         
+        <!-- Visitor Analytics Chart -->
+        <div class="admin-card">
+            <h2><i class="fas fa-chart-line"></i> Tren Pengunjung Mingguan</h2>
+            <div class="chart-container">
+                <canvas id="visitorChart"></canvas>
+            </div>
+        </div>
+
         <div class="admin-card">
             <h2 id="form-title"><i class="fas fa-plus-circle"></i> Tambah Novel Baru</h2>
             <form id="add-novel-form">
@@ -274,6 +283,7 @@
                 if (typeof novels !== 'undefined' && novels.length > 0) renderAdminNovels();
                 loadSocialSettings(); // Muat data sosial saat login berhasil
                 loadSiteSettings(); // Muat pengaturan branding
+                renderVisitorChart(); // Render grafik saat login berhasil
             } else {
                 loginSection.style.display = 'block';
                 adminContent.style.display = 'none';
