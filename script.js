@@ -585,18 +585,22 @@ async function displayNovelDetail() {
 
     // UI/UX: Tampilkan Skeleton UI saat memuat detail novel
     detailContainer.innerHTML = `
-        <div class="detail-header" style="border:none; box-shadow:none;">
-            <div class="skeleton" style="width: 250px; height: 350px; border-radius: 8px;"></div>
-            <div class="detail-info" style="flex: 1;">
-                <div class="skeleton" style="height: 2.5rem; width: 70%; margin-bottom: 1rem;"></div>
-                <div class="skeleton" style="height: 1.2rem; width: 40%; margin-bottom: 1.5rem;"></div>
-                <div class="skeleton" style="height: 100px; width: 100%; margin-bottom: 1.5rem;"></div>
-                <div style="display: flex; gap: 10px;">
-                    <div class="skeleton" style="height: 45px; width: 150px; border-radius: 6px;"></div>
-                    <div class="skeleton" style="height: 45px; width: 150px; border-radius: 6px;"></div>
+        <section class="novel-hero" style="border-bottom:none; background:transparent;">
+            <div class="container hero-content">
+                <div class="hero-cover">
+                    <div class="skeleton" style="width: 200px; height: 300px; border-radius: 12px;"></div>
+                </div>
+                <div class="hero-info" style="flex: 1;">
+                    <div class="skeleton" style="height: 1rem; width: 120px; margin-bottom: 10px;"></div>
+                    <div class="skeleton" style="height: 3rem; width: 80%; margin-bottom: 15px;"></div>
+                    <div class="skeleton" style="height: 1.2rem; width: 40%; margin-bottom: 30px;"></div>
+                    <div style="display: flex; gap: 12px;">
+                        <div class="skeleton" style="height: 50px; width: 180px; border-radius: 8px;"></div>
+                        <div class="skeleton" style="height: 50px; width: 180px; border-radius: 8px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     `;
 
     const novel = await fetchNovelDetail(novelId);
@@ -692,7 +696,7 @@ async function displayNovelDetail() {
                         <div class="stats-grid">
                             <div>
                                 <p style="margin:0; font-size: 0.7rem; color: #888;">PEMBACA</p>
-                                <p style="margin:0; font-weight: bold;">12.4k</p>
+                                <p style="margin:0; font-weight: bold;">${(novel.reading_count || 0).toLocaleString('id-ID')}</p>
                             </div>
                             <div>
                                 <p style="margin:0; font-size: 0.7rem; color: #888;">RATING</p>
