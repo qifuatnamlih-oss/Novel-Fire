@@ -201,7 +201,7 @@ async function loadGlobalData(options = {}) {
         const { 
             page = 0, 
             limit = 12, 
-            select = 'id, title, category, genre, image, author, chapters, reading_count' // Tambahkan reading_count
+            select = 'id, title, category, genre, image, author, description, chapters' 
         } = options;
 
         const from = page * limit;
@@ -770,7 +770,10 @@ async function displayReadingContent() {
 
     if (chapter) {
         // Increment reading_count menggunakan RPC (lebih efisien & aman)
-        window.supabase.rpc('increment_reading_count', { novel_id: novelId }).catch(console.error);
+        const { error: rpcError } = await window.supabase.rpc('increment_reading_count', { novel_id: novelId });
+        if (rpcError) {
+            console.error("Gagal memperbarui jumlah bacaan:", rpcError.message);
+        }
 
         const prevChapter = chapters[chapterIndex - 1];
         const nextChapter = chapters[chapterIndex + 1];
