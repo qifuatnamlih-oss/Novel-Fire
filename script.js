@@ -215,10 +215,18 @@ async function loadGlobalData(options = {}) {
         
         if (error) throw error;
         
-        // Gabungkan dengan data lokal tanpa duplikasi
-        const existingIds = new Set((window.novels || []).map(n => n.id));
-        const newItems = (data || []).filter(item => !existingIds.has(item.id));
-        window.novels = [...window.novels, ...newItems];
+        // Perbaikan: Update data jika ID sudah ada, tambahkan jika belum ada
+        if (data) {
+            data.forEach(item => {
+                const index = window.novels.findIndex(n => n.id === item.id);
+                if (index !== -1) {
+                    window.novels[index] = { ...window.novels[index], ...item };
+                } else {
+                    window.novels.push(item);
+                }
+            });
+            window.novels.sort((a, b) => b.id - a.id); // Pastikan tetap urut ID terbaru
+        }
 
         console.log(`[Supabase] Berhasil memuat ${data.length} novel.`);
         return true;
@@ -588,7 +596,7 @@ async function displayNovelDetail() {
         <section class="novel-hero" style="border-bottom:none; background:transparent;">
             <div class="container hero-content">
                 <div class="hero-cover">
-                    <div class="skeleton" style="width: 160px; height: 240px; border-radius: 12px;"></div>
+                    <div class="skeleton" style="width: 180px; height: 270px; border-radius: 12px;"></div>
                 </div>
                 <div class="hero-info" style="flex: 1;">
                     <div class="skeleton" style="height: 1rem; width: 120px; margin-bottom: 10px;"></div>
