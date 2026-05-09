@@ -1805,6 +1805,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadDynamicFooter(); // Muat tautan sosial media untuk footer
     loadSiteConfig(); // Muat logo website
 
+    // Registrasi Service Worker untuk PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
+    }
+
     setupDarkMode(); // Harus dipanggil paling awal untuk kenyamanan visual
 
     if (document.getElementById('novel-grid')) {
