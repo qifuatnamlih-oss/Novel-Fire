@@ -281,7 +281,7 @@
             if (session && isAdmin) {
                 loginSection.style.display = 'none';
                 adminContent.style.display = 'block';
-                if (typeof novels !== 'undefined' && novels.length > 0) renderAdminNovels();
+                if (window.novels && window.novels.length > 0) renderAdminNovels();
                 loadSocialSettings(); // Muat data sosial saat login berhasil
                 loadSiteSettings(); // Muat pengaturan branding
                 renderVisitorChart(); // Render grafik saat login berhasil
@@ -337,6 +337,71 @@
         async function handleLogout() {
             await window.supabase.auth.signOut();
             checkSession();
+        }
+
+        // --- LOGIKA GRAFIK PENGUNJUNG ---
+        async function renderVisitorChart() {
+            if (!window.supabase) return;
+            const { data } = await window.supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'site_stats')
+                .maybeSingle();
+
+            const stats = data?.value?.daily || {};
+            
+            // Persiapkan data untuk 7 hari terakhir
+            const labels = [];
+            const visitData = [];
+            const visitorData = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+                
+                const label = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                labels.push(label);
+                
+                visitData.push(stats[dateStr]?.visits || 0);
+                visitorData.push(stats[dateStr]?.visitors || 0);
+            }
+
+            const canvas = document.getElementById('visitorChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // Hancurkan chart lama jika ada (untuk menghindari tumpang tindih saat resize/reload)
+            if (window.myVisitorChart) window.myVisitorChart.destroy();
+
+            window.myVisitorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Kunjungan',
+                            data: visitData,
+                            borderColor: '#e8491d',
+                            backgroundColor: 'rgba(232, 73, 29, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Pengunjung Unik',
+                            data: visitorData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
         }
 
         const form = document.getElementById('add-novel-form');
@@ -484,7 +549,7 @@
 
             if (confirm(`Ditemukan ${newChapters.length} bab. Tambahkan ke novel ini?`)) {
                 statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengunggah bab ke database...';
-                const novel = novels.find(n => n.id === activeNovelIdForChapters);
+                const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
                 const updatedChapters = [...(novel.chapters || []), ...newChapters];
                 
                 const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
@@ -511,7 +576,7 @@
         };
 
         window.editChapter = function(chapterId) {
-            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
             if (!novel) return;
             
             const chapter = novel.chapters.find(ch => ch.id === chapterId);
@@ -557,7 +622,7 @@
 
             if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} bab yang dipilih?`)) return;
 
-            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
             const updatedChapters = novel.chapters.filter(ch => !selectedIds.includes(ch.id));
 
             const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
@@ -612,7 +677,7 @@
             e.preventDefault();
             if (!activeNovelIdForChapters) return;
 
-            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
             const chId = document.getElementById('ch-id').value;
             const chTitle = document.getElementById('ch-title').value;
             const chContent = document.getElementById('ch-content').value;
@@ -650,7 +715,7 @@
 
         window.deleteChapter = async function(chapterId) {
             if (!confirm('Hapus bab ini?')) return;
-            const novel = novels.find(n => n.id === activeNovelIdForChapters);
+            const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
             const updatedChapters = novel.chapters.filter(ch => ch.id !== chapterId);
             const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
             if (error) alert(error.message);
@@ -666,12 +731,13 @@
         function renderAdminNovels(filterTerm = '') {
             const listContainer = document.getElementById('admin-novels-list');
             
+            const novelsToRender = window.novels || [];
             const filteredNovels = filterTerm 
-                ? novels.filter(n => 
-                    n.title.toLowerCase().includes(filterTerm.toLowerCase()) || 
-                    n.category.toLowerCase().includes(filterTerm.toLowerCase())
+                ? novelsToRender.filter(n => 
+                    (n.title || "").toLowerCase().includes(filterTerm.toLowerCase()) || 
+                    (n.category || "").toLowerCase().includes(filterTerm.toLowerCase())
                   )
-                : novels;
+                : novelsToRender;
 
             if (filteredNovels.length === 0) {
                 listContainer.innerHTML = filterTerm 
@@ -809,7 +875,7 @@
         }
 
         window.editNovel = function(id) {
-            const novel = novels.find(n => n.id === id);
+            const novel = window.novels.find(n => n.id === id);
             if (!novel) return;
 
             document.getElementById('adm-id').value = novel.id;
@@ -924,7 +990,7 @@
             await checkSession(); // Cek sesi dulu sebelum memuat data sensitif
 
             if (document.getElementById('admin-content').style.display !== 'none') {
-                await loadGlobalData();
+                await loadGlobalData({ limit: 100 }); // Ambil lebih banyak data (sampai 100) untuk daftar admin
                 renderAdminNovels();
             }
 

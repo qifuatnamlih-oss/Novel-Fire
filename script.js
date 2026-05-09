@@ -1516,7 +1516,12 @@ async function loadSiteConfig() {
         const logoUrl = data.value.logo_url;
         const logoLinks = document.querySelectorAll('header h1 a');
         logoLinks.forEach(link => {
-            link.innerHTML = `<img src="${logoUrl}" alt="Logo" class="header-logo">`;
+            const existingLogo = link.querySelector('.header-logo');
+            if (existingLogo) {
+                existingLogo.src = logoUrl;
+            } else {
+                link.innerHTML = `<img src="${logoUrl}" alt="Logo" class="header-logo"> ` + link.innerHTML;
+            }
         });
     }
 }
