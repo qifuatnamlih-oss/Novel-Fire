@@ -1514,6 +1514,8 @@ async function loadSiteConfig() {
 
     if (data && data.value && data.value.logo_url) {
         const logoUrl = data.value.logo_url;
+        
+        // 1. Update Logo di Header
         const logoLinks = document.querySelectorAll('header h1 a');
         logoLinks.forEach(link => {
             const existingLogo = link.querySelector('.header-logo');
@@ -1523,6 +1525,29 @@ async function loadSiteConfig() {
                 link.innerHTML = `<img src="${logoUrl}" alt="Logo" class="header-logo"> ` + link.innerHTML;
             }
         });
+
+        // 2. Update Favicon (Ikon Tab Browser)
+        let favicon = document.querySelector('link[rel="icon"]');
+        if (favicon) favicon.href = logoUrl;
+
+        // 3. Update PWA Manifest secara Dinamis agar Ikon Instalasi mengikuti Logo
+        const dynamicManifest = {
+            "name": "NovelFire",
+            "short_name": "NovelFire",
+            "start_url": "index.html",
+            "display": "standalone",
+            "background_color": "#0f172a",
+            "theme_color": "#e8491d",
+            "icons": [
+                { "src": logoUrl, "sizes": "192x192", "type": "image/png" },
+                { "src": logoUrl, "sizes": "512x512", "type": "image/png" }
+            ]
+        };
+        const stringManifest = JSON.stringify(dynamicManifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const manifestTag = document.querySelector('link[rel="manifest"]');
+        if (manifestTag) manifestTag.setAttribute('href', manifestURL);
     }
 }
 

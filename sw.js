@@ -18,7 +18,16 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request).then(fetchRes => {
+          // Jika yang direquest adalah gambar dari Supabase, simpan ke cache secara otomatis
+          if (event.request.url.includes('supabase.co/storage')) {
+              return caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request.url, fetchRes.clone());
+                  return fetchRes;
+              });
+          }
+          return fetchRes;
+      });
     })
   );
 });
