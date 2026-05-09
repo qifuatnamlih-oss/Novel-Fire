@@ -588,7 +588,7 @@ async function displayNovelDetail() {
         <section class="novel-hero" style="border-bottom:none; background:transparent;">
             <div class="container hero-content">
                 <div class="hero-cover">
-                    <div class="skeleton" style="width: 180px; height: 270px; border-radius: 12px;"></div>
+                    <div class="skeleton" style="width: 160px; height: 240px; border-radius: 12px;"></div>
                 </div>
                 <div class="hero-info" style="flex: 1;">
                     <div class="skeleton" style="height: 1rem; width: 120px; margin-bottom: 10px;"></div>
@@ -634,7 +634,7 @@ async function displayNovelDetail() {
                         <h1>${novel.title}</h1>
                         <p style="font-size: 1.1rem; opacity: 0.8;">Oleh: <strong>${novel.author || 'Anonim'}</strong></p>
                         
-                        <div style="display: flex; gap: 12px; margin-top: 25px; justify-content: inherit; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 12px; margin-top: 25px; justify-content: flex-start; flex-wrap: wrap;">
                             <button class="btn-read" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${startChapterId}'">
                                 <i class="fas fa-play"></i> ${readBtnText}
                             </button>
