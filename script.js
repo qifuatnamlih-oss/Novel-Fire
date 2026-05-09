@@ -596,7 +596,7 @@ async function displayNovelDetail() {
         <section class="novel-hero" style="border-bottom:none; background:transparent;">
             <div class="container hero-content">
                 <div class="hero-cover">
-                    <div class="skeleton" style="width: 180px; height: 270px; border-radius: 12px;"></div>
+                    <div class="skeleton" style="width: 200px; height: 300px; border-radius: 12px;"></div>
                 </div>
                 <div class="hero-info" style="flex: 1;">
                     <div class="skeleton" style="height: 1rem; width: 120px; margin-bottom: 10px;"></div>

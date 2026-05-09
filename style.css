@@ -1466,6 +1466,7 @@ footer {
         grid-template-columns: 1fr; /* Ubah ke satu kolom di mobile */
         gap: 24px;
         text-align: center; /* Pusatkan teks di mobile */
+        justify-items: center; /* Memastikan kontainer gambar & teks berada di tengah */
     }
 
 
@@ -1502,7 +1503,8 @@ footer {
     }
 
     .novel-hero .hero-cover img {
-        max-width: 220px; /* Ukuran cover lebih kecil di mobile */
+        width: 180px; /* Ukuran cover lebih proporsional di mobile */
+        height: 270px;
     }
     footer {
         padding: 20px;
