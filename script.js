@@ -107,7 +107,7 @@ function updateAuthUI() {
             <div id="user-menu" class="user-menu-dropdown" style="display:none;">
                 <p>Halo, <strong>${currentUser.user_metadata.full_name || 'User'}</strong></p>
                 <hr>
-                ${isAdmin ? '<a href="admin.html"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
+                ${isAdmin ? '<a href="admin"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
                 <a href="#" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         `;
@@ -303,7 +303,7 @@ function renderNovelCard(novel) {
     const targetUrl = `detail.html?id=${novel.id}`;
 
     return `
-        <div class="novel-card" onclick="location.href='${targetUrl}'" title="${escapeHTML(novel.title)}">
+        <div class="novel-card" onclick="location.href='detail?id=${novel.id}'" title="${escapeHTML(novel.title)}">
             <div style="position:relative; overflow:hidden; border-radius:8px;">
                 <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id}, event)" aria-label="Tambah ke Favorit">
                     <i class="fas fa-heart"></i>
@@ -381,7 +381,7 @@ function displayLatestUpdates() {
             const badgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
 
             return `
-                <div class="update-item" onclick="location.href='read.html?novelId=${upd.novelId}&chapterId=${upd.chapterId}'" title="Baca ${upd.chapterTitle}">
+                <div class="update-item" onclick="location.href='read?novelId=${upd.novelId}&chapterId=${upd.chapterId}'" title="Baca ${upd.chapterTitle}">
                     <div class="update-info">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span class="update-category">${upd.category}</span>
@@ -529,7 +529,7 @@ function setupFilters() {
 
             // Jika tidak di halaman index (tidak ada grid), arahkan ke index dengan parameter kategori
             if (!novelGrid) {
-                window.location.href = `index.html?category=${category}`;
+                window.location.href = `/?category=${category}`;
                 return;
             }
 
@@ -643,7 +643,7 @@ async function displayNovelDetail() {
                         <p style="font-size: 1.1rem; opacity: 0.8;">Oleh: <strong>${novel.author || 'Anonim'}</strong></p>
                         
                         <div style="display: flex; gap: 12px; margin-top: 25px; justify-content: flex-start; flex-wrap: wrap;">
-                            <button class="btn-read" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${startChapterId}'">
+                            <button class="btn-read" onclick="location.href='read?novelId=${novel.id}&chapterId=${startChapterId}'">
                                 <i class="fas fa-play"></i> ${readBtnText}
                             </button>
                             <button class="btn-fav-detail ${isFav ? 'active' : ''}" onclick="toggleFavorite(${novel.id})">
@@ -673,7 +673,7 @@ async function displayNovelDetail() {
                             ${sortedChapters.map(ch => {
                                 const isRead = readChapters.includes(ch.id);
                                 return `
-                                    <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read.html?novelId=${novel.id}&chapterId=${ch.id}'">
+                                    <li class="chapter-item ${isRead ? 'read' : ''}" onclick="location.href='read?novelId=${novel.id}&chapterId=${ch.id}'">
                                         <span style="font-size: 0.9rem; font-weight: 600;">${ch.title}</span>
                                         ${isRead ? '<i class="fas fa-check-circle" style="color:#27ae60"></i>' : '<i class="fas fa-chevron-right" style="opacity:0.3"></i>'}
                                     </li>
@@ -791,9 +791,9 @@ async function displayReadingContent() {
         const nextChapter = chapters[chapterIndex + 1];
 
         const navButtons = `
-            ${prevChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${prevChapter.id}'" title="Bab Sebelumnya"><i class="fas fa-arrow-left"></i> Bab Sebelumnya</button>` : '<div></div>'}
-            <button onclick="location.href='detail.html?id=${novel.id}'" title="Daftar Bab"><i class="fas fa-list"></i> Daftar Bab</button>
-            ${nextChapter ? `<button onclick="location.href='read.html?novelId=${novel.id}&chapterId=${nextChapter.id}'" title="Bab Selanjutnya">Bab Selanjutnya <i class="fas fa-arrow-right"></i></button>` : '<div></div>'}
+            ${prevChapter ? `<button onclick="location.href='read?novelId=${novel.id}&chapterId=${prevChapter.id}'" title="Bab Sebelumnya"><i class="fas fa-arrow-left"></i> Bab Sebelumnya</button>` : '<div></div>'}
+            <button onclick="location.href='detail?id=${novel.id}'" title="Daftar Bab"><i class="fas fa-list"></i> Daftar Bab</button>
+            ${nextChapter ? `<button onclick="location.href='read?novelId=${novel.id}&chapterId=${nextChapter.id}'" title="Bab Selanjutnya">Bab Selanjutnya <i class="fas fa-arrow-right"></i></button>` : '<div></div>'}
         `;
 
         // Hitung estimasi waktu baca (asumsi rata-rata 200 kata per menit)
