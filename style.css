@@ -1305,6 +1305,19 @@ body.dark-mode .read-content p.highlight {
     background: #f9f9f9;
     border: 1px solid #eee;
     border-radius: 6px;
+    cursor: grab;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.chapter-admin-item.dragging {
+    opacity: 0.5;
+    background-color: var(--primary-color);
+    color: white;
+    transform: scale(0.98);
+}
+
+.chapter-admin-item:active {
+    cursor: grabbing;
 }
 .chapter-admin-item h4 { margin: 0; font-size: 1rem; }
 

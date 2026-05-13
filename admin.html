@@ -119,6 +119,10 @@
                     <input type="checkbox" id="ai-refine-toggle" style="width: auto;">
                     <label for="ai-refine-toggle" style="font-size: 0.85rem; margin-bottom: 0;">Gunakan AI untuk perbaiki Bahasa Indonesia & Gaya Bahasa</label>
                 </div>
+                <div class="admin-form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <input type="checkbox" id="bulk-overwrite-toggle" style="width: auto;">
+                    <label for="bulk-overwrite-toggle" style="font-size: 0.85rem; margin-bottom: 0; color: #2980b9; font-weight: bold;">Update bab yang judulnya sama & tambah bab baru (Perbaikan Masal)</label>
+                </div>
                 <div class="admin-form-group" id="custom-prompt-container" style="display: none;">
                     <label style="font-size: 0.85rem;">Prompt AI Kustom (Opsional)</label>
                     <textarea id="bulk-ai-prompt" rows="3" placeholder="Contoh: Ubah gaya bahasa menjadi lebih puitis dan gunakan sapaan 'Kakanda' untuk tokoh utama." style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
@@ -138,6 +142,7 @@
             </div>
 
             <div id="chapter-admin-list" class="chapter-admin-list"></div>
+            <button id="save-order-btn" onclick="saveChapterOrder()" class="btn-admin" style="display:none; background: #2c3e50; margin-top: 15px; width: 100%;"><i class="fas fa-save"></i> Simpan Urutan Bab Baru</button>
         </div>
 
         <div class="admin-card">
@@ -486,6 +491,7 @@
             const customAiPrompt = document.getElementById('bulk-ai-prompt').value.trim();
             const notePrefix = customNote ? `Catatan Penerjemah: ${customNote}\n\n` : '';
             const useAI = document.getElementById('ai-refine-toggle').checked;
+            const overwrite = document.getElementById('bulk-overwrite-toggle').checked;
             
             const baseId = Date.now();
             const newChapters = [];
@@ -549,10 +555,35 @@
                 return;
             }
 
-            if (confirm(`Ditemukan ${newChapters.length} bab. Tambahkan ke novel ini?`)) {
+            const confirmMsg = overwrite 
+                ? `Sistem akan mengupdate bab dengan judul yang sama dan menambahkan bab baru jika judul tidak ditemukan. Bab lainnya tidak akan dihapus. Lanjutkan perbaikan masal?`
+                : `Ditemukan ${newChapters.length} bab. Tambahkan ke novel ini?`;
+
+            if (confirm(confirmMsg)) {
                 statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengunggah bab ke database...';
                 const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
-                const updatedChapters = [...(novel.chapters || []), ...newChapters];
+                let updatedChapters;
+
+                if (overwrite) {
+                    // Logika Smart Update (Merge)
+                    updatedChapters = [...(novel.chapters || [])];
+                    newChapters.forEach(nc => {
+                        const existingIdx = updatedChapters.findIndex(ec => 
+                            ec.title.trim().toLowerCase() === nc.title.trim().toLowerCase()
+                        );
+                        if (existingIdx !== -1) {
+                            updatedChapters[existingIdx].content = nc.content; // Update isi bab lama
+                        } else {
+                            updatedChapters.push(nc); // Tambah sebagai bab baru
+                        }
+                    });
+                } else {
+                    // Logika Append (Tambah di bawah)
+                    updatedChapters = [...(novel.chapters || []), ...newChapters];
+                }
+
+                // Urutkan secara otomatis berdasarkan judul (Natural Sort)
+                updatedChapters.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
                 
                 const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
                 
@@ -660,8 +691,9 @@
             `;
 
             html += chapters.map(ch => `
-                <div class="chapter-admin-item">
+                <div class="chapter-admin-item" draggable="true" data-id="${ch.id}">
                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-grip-vertical" style="color: #ccc; cursor: grab;"></i>
                         <input type="checkbox" class="chapter-checkbox" value="${ch.id}">
                         <h4>${ch.title}</h4>
                     </div>
@@ -673,7 +705,79 @@
             `).join('');
 
             container.innerHTML = html;
+            setupDragAndDrop(); // Inisialisasi event listener drag
         }
+
+        // --- LOGIKA DRAG AND DROP MANUAL ---
+        function setupDragAndDrop() {
+            const container = document.getElementById('chapter-admin-list');
+            const items = container.querySelectorAll('.chapter-admin-item');
+            const saveBtn = document.getElementById('save-order-btn');
+
+            items.forEach(item => {
+                item.addEventListener('dragstart', () => {
+                    item.classList.add('dragging');
+                });
+
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    saveBtn.style.display = 'block'; // Tampilkan tombol simpan setelah ada perubahan
+                });
+            });
+
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (afterElement == null) {
+                    container.appendChild(dragging);
+                } else {
+                    container.insertBefore(dragging, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.chapter-admin-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        window.saveChapterOrder = async function() {
+            const container = document.getElementById('chapter-admin-list');
+            const itemElements = [...container.querySelectorAll('.chapter-admin-item')];
+            const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
+            
+            // Buat array baru berdasarkan urutan DOM saat ini
+            const newOrder = itemElements.map(el => {
+                const id = parseInt(el.getAttribute('data-id'));
+                return novel.chapters.find(ch => ch.id === id);
+            });
+
+            const saveBtn = document.getElementById('save-order-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+            const { error } = await window.supabase.from('novels').update({ chapters: newOrder }).eq('id', activeNovelIdForChapters);
+
+            if (error) {
+                alert("Gagal menyimpan urutan: " + error.message);
+            } else {
+                alert("Urutan bab berhasil diperbarui!");
+                novel.chapters = newOrder; // Update cache lokal
+                saveBtn.style.display = 'none';
+            }
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Urutan Bab Baru';
+        };
 
         document.getElementById('chapter-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -700,6 +804,9 @@
                 };
                 updatedChapters = [...(novel.chapters || []), newChapter];
             }
+
+            // Urutkan secara otomatis berdasarkan judul (Natural Sort) agar Bab 9 masuk sebelum Bab 10
+            updatedChapters.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
 
             const { error } = await window.supabase.from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
 
