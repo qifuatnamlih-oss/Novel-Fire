@@ -6,7 +6,8 @@ const ASSETS = [
   '/detail.html',
   '/read.html',
   '/style.css',
-  '/script.js'
+  '/script.js',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -19,8 +20,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then(fetchRes => {
-          // Jika yang direquest adalah gambar dari Supabase, simpan ke cache secara otomatis
-          if (event.request.url.includes('supabase.co/storage')) {
+          // Cache gambar Supabase secara dinamis jika request berhasil
+          if (event.request.url.includes('supabase.co/storage') && fetchRes.status === 200) {
               return caches.open(CACHE_NAME).then(cache => {
                   cache.put(event.request.url, fetchRes.clone());
                   return fetchRes;

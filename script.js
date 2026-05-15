@@ -1534,9 +1534,9 @@ async function loadSiteConfig() {
         const dynamicManifest = {
             "name": "NovelFire",
             "short_name": "NovelFire",
-            "start_url": "index.html",
+            "start_url": "/index.html",
             "display": "standalone",
-            "background_color": "#0f172a",
+            "background_color": "#020617",
             "theme_color": "#e8491d",
             "icons": [
                 { "src": logoUrl, "sizes": "192x192", "type": "image/png" },
@@ -1547,7 +1547,7 @@ async function loadSiteConfig() {
         const blob = new Blob([stringManifest], {type: 'application/json'});
         const manifestURL = URL.createObjectURL(blob);
         const manifestTag = document.querySelector('link[rel="manifest"]');
-        if (manifestTag) manifestTag.setAttribute('href', manifestURL);
+        if (manifestTag) manifestTag.href = manifestURL;
     }
 }
 
