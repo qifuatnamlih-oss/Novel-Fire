@@ -31,12 +31,12 @@ async function initSupabase() {
             if (!response.ok) throw new Error("Gagal mengambil konfigurasi dari server");
             const config = await response.json();
             
-            const SUPABASE_URL = config.url;
-            const SUPABASE_ANON_KEY = config.key;
+            const NEXT_PUBLIC_SUPABASE_URL = config.url;
+            const NEXT_PUBLIC_SUPABASE_ANON_KEY = config.key;
 
             const lib = typeof supabase !== 'undefined' ? supabase : window.supabase;
             if (lib && typeof lib.createClient === 'function') {
-                window.supabase = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { // Use the directly provided config
+                window.supabase = lib.createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, { // Use the directly provided config
                     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
                 });
                 return true;
