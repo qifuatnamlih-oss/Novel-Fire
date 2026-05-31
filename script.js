@@ -201,7 +201,7 @@ async function loadGlobalData(options = {}) {
         const { 
             page = 0, 
             limit = 12, 
-            select = 'id, title, category, genre, image, author, description, chapters' 
+            select = 'id, title, category, genre, image, author, description' 
         } = options;
 
         const from = page * limit;
