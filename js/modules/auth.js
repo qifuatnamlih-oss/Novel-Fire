@@ -22,6 +22,13 @@ export async function checkUserSession(onUserChanged) {
     }
 }
 
+export function toggleUserMenu() {
+    const menu = document.getElementById('user-menu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
 export function updateAuthUI(user, toggleUserMenu, handleLogout, handleLogin) {
     const nav = document.getElementById('main-nav');
     if (!nav) return;
