@@ -34,6 +34,7 @@ function invalidateCache() {
 
 // --- SISTEM OTENTIKASI SUPABASE ---
 async function checkSession() {
+    console.log("Admin: Checking user session...");
     const supabase = getSupabase();
     if (!supabase || typeof supabase.auth === 'undefined') {
         console.error("Supabase client belum diinisialisasi.");
@@ -46,12 +47,13 @@ async function checkSession() {
     const isAdmin = session?.user?.user_metadata?.role === 'admin';
 
     if (session && !isAdmin) {
-        console.warn("Akses ditolak: User bukan admin.");
+        console.warn("Admin: Akses ditolak: User bukan admin. Redirecting to index.html.");
         window.location.href = "index.html";
         return;
     }
 
     if (session && isAdmin) {
+        console.log("Admin: User is logged in and is an admin.");
         loginSection.style.display = 'none';
         adminContent.style.display = 'block';
         if (getNovels().length > 0) renderAdminNovels();
@@ -59,6 +61,7 @@ async function checkSession() {
         loadSiteSettings();
         renderVisitorChart();
     } else {
+        console.log("Admin: User is not logged in or not an admin. Showing login section.");
         loginSection.style.display = 'block';
         adminContent.style.display = 'none';
     }
@@ -172,7 +175,7 @@ async function handleBulkChapterUpload() {
     
     if (!error) { 
         novel.chapters = updatedChapters; 
-        renderChapterList(updatedChapters); 
+        renderChapterList(1); 
         invalidateCache(); // <--- Panggil di sini
         alert("Selesai! Cache pengunjung akan diperbarui otomatis."); 
     }
@@ -217,7 +220,9 @@ async function renderVisitorChart() {
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Admin: DOMContentLoaded event fired. Starting admin page initialization.");
     const initialized = await initSupabase();
+    console.log("Admin: Supabase initialized successfully in admin-logic.js.");
     if (!initialized) return;
 
     form = document.getElementById('add-novel-form');
@@ -227,25 +232,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await checkSession();
 
-    if (document.getElementById('admin-content').style.display !== 'none') {
+    if (document.getElementById('admin-content') && document.getElementById('admin-content').style.display !== 'none') {
+        console.log("Admin: Admin content is visible, loading initial data.");
         await loadGlobalData({ limit: 100 });
         renderAdminNovels();
         loadSiteSettings();
         loadSocialSettings();
+        console.log("Admin: Initial admin data loaded.");
+    } else {
+        console.log("Admin: Admin content is hidden, waiting for login.");
     }
 
     // Listeners untuk form
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log("Admin: Login form submitted.");
         const { error } = await getSupabase().auth.signInWithPassword({
             email: document.getElementById('login-email').value,
             password: document.getElementById('login-password').value
         });
-        if (!error) checkSession(); else alert(error.message);
+        if (!error) { console.log("Admin: Login successful. Checking session..."); checkSession(); } else { console.error("Admin: Login failed:", error.message); alert(error.message); }
     });
     
     // Search listener
-    document.getElementById('novel-search')?.addEventListener('input', (e) => renderAdminNovels(e.target.value));
+    document.getElementById('novel-search')?.addEventListener('input', (e) => { console.log(`Admin: Novel search input changed to '${e.target.value}'.`); renderAdminNovels(e.target.value); });
+    console.log("Admin: DOMContentLoaded initialization complete.");
 });
 
 // Ekspos fungsi ke global window agar atribut onclick di HTML tetap bekerja

@@ -41,21 +41,30 @@ const state = {
 };
 
 async function bootstrap() {
+    console.log("Bootstrap: Starting initialization...");
     const initialized = await initSupabase();
-    if (!initialized) return;
+    if (!initialized) {
+        console.error("Bootstrap: Supabase initialization failed. Exiting bootstrap.");
+        return;
+    }
+    console.log("Bootstrap: Supabase initialized successfully.");
 
     // Manajemen Sesi
     await AuthService.checkUserSession((user) => {
         AuthService.updateAuthUI(
-            user, 
-            AuthService.toggleUserMenu, 
-            AuthService.logout, 
+            user,
+            AuthService.toggleUserMenu,
+            AuthService.logout,
             AuthService.login
         );
+        console.log("Bootstrap: User session checked. User:", user ? user.id : "Guest");
     });
 
     // Load Data Awal
+    console.log("Bootstrap: Loading global data...");
     await DataService.loadGlobalData();
+    const novelsLoaded = DataService.getNovels();
+    console.log(`Bootstrap: Global data loaded. Found ${novelsLoaded ? novelsLoaded.length : 0} novels.`);
 
     // Setup UI Global
     setupCategoryFilters();
@@ -64,49 +73,79 @@ async function bootstrap() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
+    console.log("Bootstrap: Service Worker registration attempted.");
 
     // Deteksi Halaman & Inisialisasi UI Spesifik
+    console.log("Bootstrap: Initializing router...");
     initRouter();
+    console.log("Bootstrap: Bootstrap complete.");
 }
 
 function initRouter() {
     const path = window.location.pathname;
-    
+    console.log(`Router: Current path is ${path}`);
+    let routeMatched = false;
+
     // Panggil modul rendering sesuai route
     if (document.getElementById('novel-grid')) {
-        console.log("Inisialisasi Home Page...");
+        console.log("Router: 'novel-grid' element found. Initializing Home Page...");
         renderHome();
+        routeMatched = true;
+    } else {
+        console.log("Router: 'novel-grid' element NOT found.");
     }
-    
+
     const detailContainer = document.getElementById('novel-detail');
     if (detailContainer) {
-        console.log("Inisialisasi Detail Page...");
+        console.log("Router: 'novel-detail' element found. Initializing Detail Page...");
         const urlParams = new URLSearchParams(window.location.search);
         const novelId = parseInt(urlParams.get('id'));
-        if (novelId) loadAndRenderDetail(novelId);
+        if (novelId) {
+            console.log(`Router: Novel ID for detail page is ${novelId}.`);
+            loadAndRenderDetail(novelId);
+        } else {
+            console.warn("Router: Novel ID not found in URL for detail page. Displaying placeholder.");
+            detailContainer.innerHTML = '<p style="text-align:center; padding:20px;">ID Novel tidak ditemukan di URL.</p>';
+        }
+        routeMatched = true;
+    } else {
+        console.log("Router: 'novel-detail' element NOT found.");
     }
 
     const readContainer = document.getElementById('read-container');
     if (readContainer) {
-        console.log("Inisialisasi Reader Page...");
+        console.log("Router: 'read-container' element found. Initializing Reader Page...");
         loadAndRenderReader();
+        routeMatched = true;
+    } else {
+        console.log("Router: 'read-container' element NOT found.");
+    }
+
+    if (!routeMatched) {
+        console.warn(`Router: No specific UI element (novel-grid, novel-detail, read-container) found for path ${path}.`);
     }
 }
 
 function renderHome() {
     const grid = document.getElementById('novel-grid');
-    if (!grid) return;
+    if (!grid) {
+        console.error("renderHome: novel-grid element not found.");
+        return;
+    }
+    console.log("renderHome: Starting to render home page content.");
 
     // Bersihkan kontainer (menghapus skeleton/loading jika ada)
     grid.innerHTML = '';
 
     let novelsToRender = DataService.getNovels();
+    console.log(`renderHome: Found ${novelsToRender ? novelsToRender.length : 0} novels from DataService.`);
     if (state.currentCategory !== 'all') {
         novelsToRender = novelsToRender.filter(n => n.category === state.currentCategory);
     }
 
     if (!novelsToRender || novelsToRender.length === 0) {
         grid.innerHTML = '<p style="text-align:center; width:100%; padding:20px;">Tidak ada novel yang ditemukan.</p>';
+        console.warn("renderHome: No novels to render after filtering.");
         return;
     }
 
@@ -124,17 +163,23 @@ function renderHome() {
             </div>
         </div>
     `).join('');
+    console.log(`renderHome: Successfully rendered ${novelsToRender.length} novel cards.`);
 }
 
 async function loadAndRenderDetail(id) {
     const detailContainer = document.getElementById('novel-detail');
-    if (!detailContainer) return;
+    if (!detailContainer) {
+        console.error("loadAndRenderDetail: novel-detail element not found.");
+        return;
+    }
+    console.log(`loadAndRenderDetail: Fetching detail for novel ID: ${id}`);
 
     const novel = await DataService.fetchNovelDetail(id);
     if (!novel) {
         detailContainer.innerHTML = '<p>Novel tidak ditemukan.</p>';
         return;
     }
+    console.log(`loadAndRenderDetail: Successfully fetched novel detail for "${novel.title}".`);
 
     detailContainer.innerHTML = `
         <div class="detail-header">
@@ -161,16 +206,22 @@ async function loadAndRenderDetail(id) {
             </ul>
         </div>
     `;
+    console.log(`loadAndRenderDetail: Successfully rendered detail for "${novel.title}".`);
 }
 
 async function loadAndRenderReader() {
     const container = document.getElementById('read-container');
+    if (!container) {
+        console.error("loadAndRenderReader: read-container element not found.");
+        return;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const novelId = parseInt(urlParams.get('id'));
     const chapterIdx = parseInt(urlParams.get('ch') || 0);
+    console.log(`loadAndRenderReader: Attempting to load novel ID ${novelId}, chapter index ${chapterIdx}.`);
 
     const novel = await DataService.fetchNovelDetail(novelId);
-    if (!novel || !novel.chapters || !novel.chapters[chapterIdx]) return;
+    if (!novel || !novel.chapters || !novel.chapters[chapterIdx]) { console.warn(`loadAndRenderReader: Novel (ID: ${novelId}) or chapter (Index: ${chapterIdx}) not found.`); return; }
 
     const chapter = novel.chapters[chapterIdx];
     container.innerHTML = `
@@ -182,6 +233,7 @@ async function loadAndRenderReader() {
             ${chapter.content.split('\n').map(p => `<p>${p}</p>`).join('')}
         </div>
     `;
+    console.log(`loadAndRenderReader: Successfully rendered chapter "${chapter.title}" from novel "${novel.title}".`);
 }
 
 function setupCategoryFilters() {
@@ -191,9 +243,11 @@ function setupCategoryFilters() {
             state.currentCategory = e.currentTarget.dataset.category;
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             e.currentTarget.classList.add('active');
+            console.log(`setupCategoryFilters: Category changed to '${state.currentCategory}'. Re-rendering home.`);
             renderHome();
         });
     });
+    console.log("setupCategoryFilters: All nav-links have click listeners.");
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
