@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - NovelFire</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#e8491d">
+    <meta name="theme-color" content="#e8491d" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -26,12 +27,12 @@
             <p style="text-align: center; color: #888; margin-bottom: 25px;">Masukkan kredensial Anda untuk mengelola konten.</p>
             <form id="login-form">
                 <div class="admin-form-group" style="margin-bottom: 20px;">
-                    <label>Email Admin</label>
-                    <input type="email" id="login-email" required>
+                    <label for="login-email">Email Admin</label>
+                    <input type="email" id="login-email" required placeholder="admin@example.com" title="Masukkan email admin">
                 </div>
                 <div class="admin-form-group">
-                    <label>Password</label>
-                    <input type="password" id="login-password" required>
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="********" title="Masukkan password admin">
                     <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary-color); display: block; margin-top: 5px; text-align: right; text-decoration: none;">Lupa Password?</a>
                 </div>
                 <button type="submit" class="btn-admin btn-success" style="width: 100%;">Masuk</button>
@@ -57,33 +58,33 @@
             <form id="add-novel-form">
                 <input type="hidden" id="adm-id">
                 <div class="admin-form-group">
-                    <label>Judul Novel</label>
-                    <input type="text" id="adm-title" required>
+                    <label for="adm-title">Judul Novel</label>
+                    <input type="text" id="adm-title" required placeholder="Masukkan judul novel..." title="Judul Novel">
                 </div>
                 <div class="admin-form-group">
-                    <label>Kategori</label>
-                    <select id="adm-category">
+                    <label for="adm-category">Kategori</label>
+                    <select id="adm-category" title="Pilih Kategori Novel">
                         <option value="China">China</option>
                         <option value="Jepang">Jepang</option>
                         <option value="Fanfiction">Fanfiction</option>
                     </select>
                 </div>
                 <div class="admin-form-group">
-                    <label>Genre (Pisahkan dengan koma)</label>
+                    <label for="adm-genre">Genre (Pisahkan dengan koma)</label>
                     <input type="text" id="adm-genre" placeholder="Fantasy, Action">
                 </div>
                 <div class="admin-form-group">
-                    <label>Penulis</label>
+                    <label for="adm-author">Penulis</label>
                     <input type="text" id="adm-author" placeholder="Nama Penulis">
                 </div>
                 <div class="admin-form-group">
-                    <label>URL Gambar Cover</label>
-                    <input type="file" id="adm-image" accept="image/*">
+                    <label for="adm-image">URL Gambar Cover</label>
+                    <input type="file" id="adm-image" accept="image/*" title="Pilih file gambar cover">
                     <input type="hidden" id="adm-image-url-hidden"> <!-- Untuk menyimpan URL gambar yang sudah ada saat edit -->
                 </div>
                 <div class="admin-form-group">
-                    <label>Sinopsis</label>
-                    <textarea id="adm-desc" rows="4"></textarea>
+                    <label for="adm-desc">Sinopsis</label>
+                    <textarea id="adm-desc" rows="4" placeholder="Tuliskan sinopsis novel di sini..." title="Sinopsis Novel"></textarea>
                 </div>
                 <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database Lokal</button>
                 <button type="button" id="cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetForm()">Batal</button>
@@ -116,11 +117,11 @@
                 <h4 style="margin-top: 0;"><i class="fas fa-file-import"></i> Upload Bab Masal (.txt)</h4>
                 <p style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Gunakan format <code>### Judul Bab</code> di awal setiap bab dalam satu file .txt.</p>
                 <div class="admin-form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <input type="checkbox" id="ai-refine-toggle" style="width: auto;">
+                    <input type="checkbox" id="ai-refine-toggle" style="width: auto;" title="Gunakan perbaikan AI">
                     <label for="ai-refine-toggle" style="font-size: 0.85rem; margin-bottom: 0;">Gunakan AI untuk perbaiki Bahasa Indonesia & Gaya Bahasa</label>
                 </div>
                 <div class="admin-form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <input type="checkbox" id="bulk-overwrite-toggle" style="width: auto;">
+                    <input type="checkbox" id="bulk-overwrite-toggle" style="width: auto;" title="Aktifkan mode update bab yang ada">
                     <label for="bulk-overwrite-toggle" style="font-size: 0.85rem; margin-bottom: 0; color: #2980b9; font-weight: bold;">Update bab yang judulnya sama & tambah bab baru (Perbaikan Masal)</label>
                 </div>
                 <div class="admin-form-group" id="custom-prompt-container" style="display: none;">
@@ -131,7 +132,7 @@
                     <label style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
                     <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh NovelFire Team. Selamat membaca!" style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
                 </div>
-                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;">
+                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;" title="Pilih file teks bab masal">
                 <div id="bulk-upload-status" style="margin-bottom: 10px; text-align: center; font-style: italic; color: #888; display: none;">
                     <i class="fas fa-spinner fa-spin"></i> Memuat...
                 </div>
@@ -189,8 +190,8 @@
             <p>Upload logo website Anda (disarankan format PNG transparan untuk hasil terbaik).</p>
             <form id="site-branding-form">
                 <div class="admin-form-group">
-                    <label>Logo Website</label>
-                    <input type="file" id="site-logo-input" accept="image/*">
+                    <label for="site-logo-input">Logo Website</label>
+                    <input type="file" id="site-logo-input" accept="image/*" title="Upload Logo Website">
                     <input type="hidden" id="site-logo-url-hidden">
                     <img id="logo-preview" src="https://placehold.co/150x50?text=Logo" alt="Pratinjau Logo" style="max-height: 50px; margin-top: 10px; display: block; background: #eee; padding: 5px; border-radius: 4px;">
                 </div>

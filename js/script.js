@@ -15,10 +15,13 @@ window.googleTranslateElementInit = function() {
 // Utilitas Caching Sederhana
 const AppCache = {
     set(key, data, ttlMinutes = 15) {
+        try {
         const expiry = Date.now() + (ttlMinutes * 60 * 1000);
         localStorage.setItem(`cache_${key}`, JSON.stringify({ data, expiry }));
+        } catch (e) { console.warn("AppCache: Gagal menulis ke localStorage (mungkin diblokir browser)"); }
     },
     get(key) {
+        try {
         const itemStr = localStorage.getItem(`cache_${key}`);
         if (!itemStr) return null;
         const item = JSON.parse(itemStr);
@@ -27,6 +30,7 @@ const AppCache = {
             return null;
         }
         return item.data;
+        } catch (e) { return null; }
     },
     clearAll() {
         Object.keys(localStorage)
@@ -68,6 +72,9 @@ async function bootstrap() {
 
     // Setup UI Global
     setupCategoryFilters();
+
+    // Accessibility: Fix missing titles in third-party iframes (Translate/Ads)
+    observeIframeAccessibility();
 
     // PWA & UI Global
     if ('serviceWorker' in navigator) {
@@ -152,10 +159,10 @@ function renderHome() {
     // Generate HTML untuk setiap novel
     grid.innerHTML = novelsToRender.map(novel => `
         <div class="novel-card" onclick="location.href='detail.html?id=${novel.id}'">
-            <button class="fav-btn" onclick="event.stopPropagation();">
+            <button class="fav-btn" onclick="event.stopPropagation();" title="Tambah ke Favorit" aria-label="Tambah ke Favorit">
                 <i class="far fa-heart"></i>
             </button>
-            <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${novel.title}" loading="lazy">
+            <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${novel.title}" width="150" height="200">
             <h3>${novel.title}</h3>
             <p class="author-link">${novel.author || 'Anonim'}</p>
             <div class="rating">
@@ -248,6 +255,20 @@ function setupCategoryFilters() {
         });
     });
     console.log("setupCategoryFilters: All nav-links have click listeners.");
+}
+
+/**
+ * Memastikan semua iframe (seperti dari Google Translate/Ads) memiliki atribut title
+ * agar memenuhi standar aksesibilitas (WCAG).
+ */
+function observeIframeAccessibility() {
+    const observer = new MutationObserver(() => {
+        const iframes = document.querySelectorAll('iframe:not([title])');
+        iframes.forEach(iframe => {
+            iframe.setAttribute('title', 'Konten Pihak Ketiga');
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
