@@ -1274,20 +1274,53 @@ body.dark-mode .read-content p.highlight {
 .pagination {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
+    align-items: center;
+    gap: 10px;
+    margin: 30px 0;
+    flex-wrap: wrap;
 }
+
 .btn-page {
-    padding: 6px 12px;
-    border: 1px solid var(--primary-color);
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
     background: var(--white);
-    color: var(--primary-color);
+    color: var(--text-color);
+    font-weight: 600;
+    border-radius: 10px;
     cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
-.btn-page.active { background: var(--primary-color); color: white; }
-.btn-page:hover:not(.active) { background: #fdf2f0; }
+
+.btn-page:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+
+.btn-page.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(232, 73, 29, 0.3);
+}
+
+body.dark-mode .btn-page:not(.active) {
+    background: var(--white); /* Menggunakan elevated surface dark mode */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .btn-page:hover:not(.active) {
+    background: rgba(232, 73, 29, 0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
 
 /* Chapter Manager Admin Styles */
 .chapter-admin-list {
