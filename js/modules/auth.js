@@ -22,10 +22,11 @@ export async function checkUserSession(onUserChanged) {
     }
 }
 
-export function toggleUserMenu() {
+function internalToggleMenu() {
     const menu = document.getElementById('user-menu');
     if (menu) {
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        const isHidden = menu.style.display === 'none' || menu.style.display === '';
+        menu.style.display = isHidden ? 'block' : 'none';
     }
 }
 
@@ -55,7 +56,7 @@ export function updateAuthUI(user, toggleUserMenu, handleLogout, handleLogin) {
                 <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         `;
-        document.getElementById('profile-trigger').onclick = toggleUserMenu;
+        document.getElementById('profile-trigger').onclick = internalToggleMenu;
         document.getElementById('logout-link').onclick = handleLogout;
     } else {
         authBtn.innerHTML = `<button id="login-btn" class="btn-read" style="padding: 5px 15px; font-size: 0.8rem;">Login</button>`;

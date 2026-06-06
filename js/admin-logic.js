@@ -1,5 +1,5 @@
 import { initSupabase, getSupabase } from './modules/supabase-client.js';
-import { loadGlobalData, fetchNovelDetail } from './modules/data-service.js';
+import { loadGlobalData, fetchNovelDetail, getNovels } from './modules/data-service.js';
 
 // State management
 let currentCommentPage = 1;
@@ -54,7 +54,7 @@ async function checkSession() {
     if (session && isAdmin) {
         loginSection.style.display = 'none';
         adminContent.style.display = 'block';
-        if (window.novels && window.novels.length > 0) renderAdminNovels();
+        if (getNovels().length > 0) renderAdminNovels();
         loadSocialSettings();
         loadSiteSettings();
         renderVisitorChart();
@@ -166,7 +166,7 @@ async function handleBulkChapterUpload() {
         newChapters.push({ id: baseId + i, title: lines[0].trim(), content });
     }
 
-    const novel = window.novels.find(n => n.id === activeNovelIdForChapters);
+    const novel = getNovels().find(n => n.id === activeNovelIdForChapters);
     const updatedChapters = [...(novel.chapters || []), ...newChapters];
     const { error } = await getSupabase().from('novels').update({ chapters: updatedChapters }).eq('id', activeNovelIdForChapters);
     
@@ -183,7 +183,7 @@ async function handleBulkChapterUpload() {
 
 function renderAdminNovels(filterTerm = '') {
     const listContainer = document.getElementById('admin-novels-list');
-    const filtered = (window.novels || []).filter(n => n.title.toLowerCase().includes(filterTerm.toLowerCase()));
+    const filtered = getNovels().filter(n => n.title.toLowerCase().includes(filterTerm.toLowerCase()));
     let html = `<table class="admin-table"><thead><tr><th>Judul</th><th>Aksi</th></tr></thead><tbody>`;
     filtered.forEach(n => {
         html += `<tr><td>${n.title}</td><td><button onclick="editNovel(${n.id})">Edit</button><button onclick="openChapterManager(${n.id})">Bab</button></td></tr>`;

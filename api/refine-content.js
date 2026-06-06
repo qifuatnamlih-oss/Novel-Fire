@@ -11,6 +11,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ refinedContent: content, error: 'Konfigurasi API Key tidak ditemukan' });
   }
 
+  // Validasi panjang konten untuk mencegah payload terlalu besar
+  if (content.length > 30000) {
+    return res.status(400).json({ refinedContent: content, error: 'Teks terlalu panjang (maksimal 30rb karakter)' });
+  }
+
   const systemInstruction = `
 Tugas: Bertindaklah sebagai editor novel profesional. Tulis ulang dan perbaiki teks novel di bawah ini.
 Instruksi Wajib:

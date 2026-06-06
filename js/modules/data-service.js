@@ -1,6 +1,14 @@
 import { getSupabase } from './supabase-client.js';
 
-if (typeof window.novels === 'undefined') window.novels = [];
+let novels = [];
+
+export function getNovels() {
+    return novels;
+}
+
+export function getNovelById(id) {
+    return novels.find(n => n.id === id);
+}
 
 export async function loadGlobalData(options = {}) {
     const supabase = getSupabase();
@@ -19,11 +27,11 @@ export async function loadGlobalData(options = {}) {
         
         if (data) {
             data.forEach(item => {
-                const index = window.novels.findIndex(n => n.id === item.id);
-                if (index !== -1) window.novels[index] = { ...window.novels[index], ...item };
-                else window.novels.push(item);
+                const index = novels.findIndex(n => n.id === item.id);
+                if (index !== -1) novels[index] = { ...novels[index], ...item };
+                else novels.push(item);
             });
-            window.novels.sort((a, b) => b.id - a.id);
+            novels.sort((a, b) => b.id - a.id);
         }
         return true;
     } catch (error) {
@@ -33,7 +41,7 @@ export async function loadGlobalData(options = {}) {
 }
 
 export async function fetchNovelDetail(id) {
-    const local = window.novels.find(n => n.id === id);
+    const local = getNovelById(id);
     if (local && local.chapters) return local;
 
     const { data, error } = await getSupabase()
@@ -44,8 +52,8 @@ export async function fetchNovelDetail(id) {
 
     if (error) return null;
 
-    const index = window.novels.findIndex(n => n.id === id);
-    if (index !== -1) window.novels[index] = data;
-    else window.novels.push(data);
+    const index = novels.findIndex(n => n.id === id);
+    if (index !== -1) novels[index] = data;
+    else novels.push(data);
     return data;
 }

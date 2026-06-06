@@ -21,28 +21,27 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      const fetchPromise = fetch(event.request).then(fetchRes => {
-        // Cache gambar DAN data API Supabase secara dinamis
-        const isSupabaseData = event.request.url.includes('supabase.co/rest/v1');
-        const isSupabaseStorage = event.request.url.includes('supabase.co/storage');
-
-        if ((isSupabaseData || isSupabaseStorage) && fetchRes.status === 200) {
-            return caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request.url, fetchRes.clone());
-                return fetchRes;
-            });
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        const isSupabase = event.request.url.includes('supabase.co');
+        
+        if (networkResponse.status === 200 && (isSupabase || event.request.destination === 'image')) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-        return fetchRes;
-      });
+        return networkResponse;
+      }).catch(() => cachedResponse);
 
-      // Strategi: Stale-While-Revalidate untuk data API
-      // Jika ada di cache, kembalikan cache tapi tetap update di background
-      if (event.request.url.includes('supabase.co/rest/v1')) {
-          return response || fetchPromise;
+      // Strategi: Stale-While-Revalidate
+      if (cachedResponse) {
+        // Update cache di background
+        event.waitUntil(fetchPromise);
+        return cachedResponse;
       }
 
-      return response || fetchPromise;
+      return fetchPromise;
     })
   );
 });

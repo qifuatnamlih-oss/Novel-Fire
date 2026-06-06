@@ -100,9 +100,9 @@ function renderHome() {
     // Bersihkan kontainer (menghapus skeleton/loading jika ada)
     grid.innerHTML = '';
 
-    let novelsToRender = window.novels;
+    let novelsToRender = DataService.getNovels();
     if (state.currentCategory !== 'all') {
-        novelsToRender = window.novels.filter(n => n.category === state.currentCategory);
+        novelsToRender = novelsToRender.filter(n => n.category === state.currentCategory);
     }
 
     if (!novelsToRender || novelsToRender.length === 0) {
