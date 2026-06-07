@@ -24,7 +24,7 @@
 
     <nav id="main-nav">
         <div class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i> Menu</div>
-        <div class="nav-links-container" style="display: contents;">
+        <div class="nav-links-container display-contents">
             <a href="/" class="nav-link" data-category="all"><i class="fas fa-home"></i> Home</a>
             <a href="#" class="nav-link" data-category="China"><i class="fas fa-scroll"></i> China</a>
             <a href="#" class="nav-link" data-category="Jepang"><i class="fas fa-book-open"></i> Jepang</a>
@@ -41,6 +41,7 @@
             <!-- Konten bacaan diisi oleh JavaScript -->
             <p style="text-align: center;">Menyiapkan teks cerita...</p>
         </div>
+        <div id="reader-nav" class="reader-nav-buttons"></div>
     </div>
 
     <footer>
@@ -53,6 +54,8 @@
         </div>
         <p><a href="admin" style="color: #888; text-decoration: none; font-size: 0.8rem;"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
     </footer>
+
+    <button id="back-to-top" class="back-to-top" title="Kembali ke Atas"><i class="fas fa-chevron-up"></i></button>
 
     <script src="js/script.js" type="module"></script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

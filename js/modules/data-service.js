@@ -10,6 +10,23 @@ export function getNovelById(id) {
     return novels.find(n => n.id === id);
 }
 
+/**
+ * Fungsi internal untuk memperbarui atau menambah novel ke state lokal.
+ * Memastikan tidak ada duplikasi dan data tetap terurut.
+ */
+function upsertNovels(data) {
+    const items = Array.isArray(data) ? data : [data];
+    items.forEach(item => {
+        const index = novels.findIndex(n => n.id === item.id);
+        if (index !== -1) {
+            novels[index] = { ...novels[index], ...item };
+        } else {
+            novels.push(item);
+        }
+    });
+    novels.sort((a, b) => b.id - a.id);
+}
+
 export async function loadGlobalData(options = {}) {
     const supabase = getSupabase();
     try {
@@ -25,14 +42,7 @@ export async function loadGlobalData(options = {}) {
         
         if (error) throw error;
         
-        if (data) {
-            data.forEach(item => {
-                const index = novels.findIndex(n => n.id === item.id);
-                if (index !== -1) novels[index] = { ...novels[index], ...item };
-                else novels.push(item);
-            });
-            novels.sort((a, b) => b.id - a.id);
-        }
+        if (data) upsertNovels(data);
         return true;
     } catch (error) {
         console.error("Kesalahan loadGlobalData:", error.message);
@@ -52,8 +62,10 @@ export async function fetchNovelDetail(id) {
 
     if (error) return null;
 
-    const index = novels.findIndex(n => n.id === id);
-    if (index !== -1) novels[index] = data;
-    else novels.push(data);
+    if (data) upsertNovels(data);
     return data;
+}
+
+export function clearCache() {
+    novels = [];
 }

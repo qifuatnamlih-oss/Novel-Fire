@@ -40,6 +40,9 @@ const AppCache = {
     }
 };
 
+// Ekspos AppCache ke global agar bisa digunakan oleh admin-logic.js
+window.AppCache = AppCache;
+
 const state = {
     currentCategory: 'all'
 };
@@ -75,6 +78,7 @@ async function bootstrap() {
 
     // Accessibility: Fix missing titles in third-party iframes (Translate/Ads)
     observeIframeAccessibility();
+    setupReadingProgress();
 
     // PWA & UI Global
     if ('serviceWorker' in navigator) {
@@ -151,24 +155,26 @@ function renderHome() {
     }
 
     if (!novelsToRender || novelsToRender.length === 0) {
-        grid.innerHTML = '<p style="text-align:center; width:100%; padding:20px;">Tidak ada novel yang ditemukan.</p>';
+        grid.innerHTML = '<p class="text-center w-full p-20">Tidak ada novel yang ditemukan.</p>';
         console.warn("renderHome: No novels to render after filtering.");
         return;
     }
 
     // Generate HTML untuk setiap novel
     grid.innerHTML = novelsToRender.map(novel => `
-        <div class="novel-card" onclick="location.href='detail.html?id=${novel.id}'">
-            <button class="fav-btn" onclick="event.stopPropagation();" title="Tambah ke Favorit" aria-label="Tambah ke Favorit">
-                <i class="far fa-heart"></i>
-            </button>
-            <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${novel.title}" width="150" height="200">
-            <h3>${novel.title}</h3>
-            <p class="author-link">${novel.author || 'Anonim'}</p>
-            <div class="rating">
-                <i class="fas fa-star"></i> 4.5
+        <a href="detail.html?id=${novel.id}" class="novel-card-link">
+            <div class="novel-card">
+                <button class="fav-btn" onclick="event.preventDefault(); event.stopPropagation();" title="Tambah ke Favorit" aria-label="Tambah ke Favorit">
+                    <i class="far fa-heart"></i>
+                </button>
+                <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${novel.title}" width="150" height="200">
+                <h3>${novel.title}</h3>
+                <p class="author-link">${novel.author || 'Anonim'}</p>
+                <div class="rating">
+                    <i class="fas fa-star"></i> 4.5
+                </div>
             </div>
-        </div>
+        </a>
     `).join('');
     console.log(`renderHome: Successfully rendered ${novelsToRender.length} novel cards.`);
 }
@@ -196,7 +202,7 @@ async function loadAndRenderDetail(id) {
                 <span class="tag">${novel.category}</span>
                 <p><strong>Penulis:</strong> ${novel.author || 'Anonim'}</p>
                 <div class="rating"><i class="fas fa-star"></i> 4.5</div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <div class="flex gap-10 mt-20">
                     <button class="btn-read" onclick="location.href='read.html?id=${novel.id}&ch=0'">Mulai Membaca</button>
                 </div>
             </div>
@@ -228,7 +234,11 @@ async function loadAndRenderReader() {
     console.log(`loadAndRenderReader: Attempting to load novel ID ${novelId}, chapter index ${chapterIdx}.`);
 
     const novel = await DataService.fetchNovelDetail(novelId);
-    if (!novel || !novel.chapters || !novel.chapters[chapterIdx]) { console.warn(`loadAndRenderReader: Novel (ID: ${novelId}) or chapter (Index: ${chapterIdx}) not found.`); return; }
+    if (!novel || !novel.chapters || !novel.chapters[chapterIdx]) { 
+        console.warn(`loadAndRenderReader: Novel (ID: ${novelId}) or chapter (Index: ${chapterIdx}) not found.`);
+        container.innerHTML = '<div class="error-msg"><p>Maaf, bab ini tidak tersedia atau gagal dimuat.</p><button onclick="history.back()" class="btn-read">Kembali</button></div>';
+        return; 
+    }
 
     const chapter = novel.chapters[chapterIdx];
     container.innerHTML = `
@@ -240,7 +250,35 @@ async function loadAndRenderReader() {
             ${chapter.content.split('\n').map(p => `<p>${p}</p>`).join('')}
         </div>
     `;
+
+    // Render tombol navigasi
+    const navContainer = document.getElementById('reader-nav');
+    if (navContainer) {
+        navContainer.innerHTML = `
+            <button class="btn-read" ${chapterIdx === 0 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx - 1}'"`} title="Bab Sebelumnya">
+                <i class="fas fa-arrow-left"></i> Sebelumnya
+            </button>
+            <button class="btn-read" onclick="location.href='detail.html?id=${novelId}'" title="Kembali ke Daftar Bab">
+                <i class="fas fa-list"></i> Daftar Bab
+            </button>
+            <button class="btn-read" ${chapterIdx >= novel.chapters.length - 1 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx + 1}'"`} title="Bab Selanjutnya">
+                Selanjutnya <i class="fas fa-arrow-right"></i>
+            </button>
+        `;
+    }
+
     console.log(`loadAndRenderReader: Successfully rendered chapter "${chapter.title}" from novel "${novel.title}".`);
+}
+
+function setupReadingProgress() {
+    const progressBar = document.getElementById('reading-progress');
+    if (!progressBar) return;
+    window.addEventListener('scroll', () => {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + "%";
+    });
 }
 
 function setupCategoryFilters() {

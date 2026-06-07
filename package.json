@@ -1,5 +1,12 @@
 {
+  "name": "novelfire",
+  "version": "1.0.0",
+  "description": "Platform baca novel dan fanfiction dengan integrasi AI.",
+  "type": "module",
   "dependencies": {
     "@google/generative-ai": "^0.24.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

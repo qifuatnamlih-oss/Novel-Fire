@@ -152,6 +152,8 @@ async function handleBulkChapterUpload() {
     if (!file || !activeNovelIdForChapters) return alert("Pilih file.");
     
     bulkUploadBtn.disabled = true;
+    const originalBtnText = bulkUploadBtn.innerText;
+    
     const text = await file.text();
     const segments = text.split(/###\s+/).filter(s => s.trim() !== "");
     const useAI = document.getElementById('ai-refine-toggle').checked;
@@ -159,14 +161,28 @@ async function handleBulkChapterUpload() {
     const baseId = Date.now();
 
     for (let i = 0; i < segments.length; i++) {
+        bulkUploadBtn.innerText = `Memproses ${i + 1}/${segments.length}...`;
         const lines = segments[i].split('\n');
+        const title = lines[0]?.trim() || `Bab Baru ${i + 1}`;
         let content = lines.slice(1).join('\n').trim();
+
         if (useAI) {
-            const aiRes = await fetch('/api/refine-content', { method: 'POST', body: JSON.stringify({ content }) });
-            if (aiRes.ok) { const data = await aiRes.json(); content = data.refinedContent; }
+            try {
+                const aiRes = await fetch('/api/refine-content', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content }) 
+                });
+                if (aiRes.ok) { 
+                    const data = await aiRes.json(); 
+                    content = data.refinedContent; 
+                }
+            } catch (err) {
+                console.error(`Gagal memproses AI untuk bab ${title}:`, err);
+            }
             if (i < segments.length - 1) await new Promise(r => setTimeout(r, 5000));
         }
-        newChapters.push({ id: baseId + i, title: lines[0].trim(), content });
+        newChapters.push({ id: baseId + i, title, content });
     }
 
     const novel = getNovels().find(n => n.id === activeNovelIdForChapters);
@@ -176,10 +192,13 @@ async function handleBulkChapterUpload() {
     if (!error) { 
         novel.chapters = updatedChapters; 
         renderChapterList(1); 
-        invalidateCache(); // <--- Panggil di sini
+        invalidateCache();
         alert("Selesai! Cache pengunjung akan diperbarui otomatis."); 
+    } else {
+        alert("Gagal menyimpan ke database: " + error.message);
     }
     bulkUploadBtn.disabled = false;
+    bulkUploadBtn.innerText = originalBtnText;
 }
 
 // ... [Sisa fungsi manajemen seperti editChapter, deleteNovel, renderAdminNovels, dll] ...

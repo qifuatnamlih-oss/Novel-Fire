@@ -15,34 +15,34 @@
 </head>
 <body>
     <header>
-        <div style="position: absolute; right: 20px; top: 10px;">
+        <div class="pos-absolute right-20 top-10">
             <div id="google_translate_element"></div>
         </div>
         <h1><a href="/">Novel<span>Fire</span> Admin</a></h1>
     </header>
 
     <div class="container" id="login-section">
-        <div class="admin-card" style="max-width: 400px; margin: 80px auto; border-top: 5px solid var(--primary-color); box-shadow: var(--shadow-strong);">
-            <h2 style="text-align: center;"><i class="fas fa-user-shield"></i> NovelFire Admin</h2>
-            <p style="text-align: center; color: #888; margin-bottom: 25px;">Masukkan kredensial Anda untuk mengelola konten.</p>
+        <div class="admin-card admin-login-card">
+            <h2 class="text-center"><i class="fas fa-user-shield"></i> NovelFire Admin</h2>
+            <p class="text-center text-muted mb-25">Masukkan kredensial Anda untuk mengelola konten.</p>
             <form id="login-form">
-                <div class="admin-form-group" style="margin-bottom: 20px;">
+                <div class="admin-form-group mb-20">
                     <label for="login-email">Email Admin</label>
                     <input type="email" id="login-email" required placeholder="admin@example.com" title="Masukkan email admin">
                 </div>
                 <div class="admin-form-group">
                     <label for="login-password">Password</label>
                     <input type="password" id="login-password" required placeholder="********" title="Masukkan password admin">
-                    <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary-color); display: block; margin-top: 5px; text-align: right; text-decoration: none;">Lupa Password?</a>
+                    <a href="#" onclick="handleForgotPassword(event)" class="text-sm text-primary display-block mt-5 text-right no-decoration">Lupa Password?</a>
                 </div>
-                <button type="submit" class="btn-admin btn-success" style="width: 100%;">Masuk</button>
+                <button type="submit" class="btn-admin btn-success w-full">Masuk</button>
             </form>
         </div>
     </div>
 
-    <div class="container" id="admin-content" style="display: none;">
-        <nav style="background:none; border:none; margin-bottom: 20px; justify-content: flex-end; padding:0;">
-            <button onclick="handleLogout()" class="btn-admin btn-danger" style="border-radius: 50px; padding: 10px 25px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    <div class="container display-none" id="admin-content">
+        <nav class="bg-none border-none mb-20 justify-end p-0">
+            <button onclick="handleLogout()" class="btn-admin btn-danger rounded-full p-15"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </nav>
         
         <!-- Visitor Analytics Chart -->
@@ -86,15 +86,15 @@
                     <label for="adm-desc">Sinopsis</label>
                     <textarea id="adm-desc" rows="4" placeholder="Tuliskan sinopsis novel di sini..." title="Sinopsis Novel"></textarea>
                 </div>
-                <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database Lokal</button>
-                <button type="button" id="cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetForm()">Batal</button>
-                <img id="image-preview" src="https://placehold.co/150x200?text=Preview" alt="Pratinjau Gambar" style="max-width: 150px; max-height: 200px; margin-top: 15px; border-radius: 8px; display: block;" loading="lazy">
+                <button type="submit" id="submit-btn" class="btn-admin btn-success">Simpan ke Database</button>
+                <button type="button" id="cancel-btn" class="btn-admin display-none bg-muted" onclick="resetForm()">Batal</button>
+                <img id="image-preview" src="https://placehold.co/150x200?text=Preview" alt="Pratinjau Gambar" class="novel-preview-img" loading="lazy">
             </form>
         </div>
 
         <!-- Chapter Manager Section -->
-        <div id="chapter-manager-card" class="admin-card" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div id="chapter-manager-card" class="admin-card display-none">
+            <div class="flex justify-between align-center">
                 <h2 id="chapter-mgr-title">Kelola Bab</h2>
                 <button onclick="closeChapterManager()" class="btn-admin btn-danger">Tutup</button>
             </div>
@@ -109,7 +109,7 @@
                     <label>Konten Bab</label>
                     <textarea id="ch-content" rows="10" required placeholder="Tuliskan isi cerita di sini..."></textarea>
                 </div>
-                <button type="submit" id="ch-submit-btn" class="btn-admin btn-success">Tambah Bab</button>
+                <button type="submit" id="ch-submit-btn" class="btn-admin btn-success">Simpan Bab</button>
                 <button type="button" id="ch-cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetChapterForm()">Batal</button>
             </form>
             
@@ -129,10 +129,10 @@
                     <textarea id="bulk-ai-prompt" rows="3" placeholder="Contoh: Ubah gaya bahasa menjadi lebih puitis dan gunakan sapaan 'Kakanda' untuk tokoh utama." style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
                 </div>
                 <div class="admin-form-group">
-                    <label style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
+                    <label for="bulk-custom-note" style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
                     <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh NovelFire Team. Selamat membaca!" style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
                 </div>
-                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;" title="Pilih file teks bab masal">
+                <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;" title="Pilih file teks bab masal" aria-label="Pilih file teks bab masal">
                 <div id="bulk-upload-status" style="margin-bottom: 10px; text-align: center; font-style: italic; color: #888; display: none;">
                     <i class="fas fa-spinner fa-spin"></i> Memuat...
                 </div>
@@ -161,11 +161,11 @@
         <div class="admin-card">
             <h2><i class="fas fa-comments"></i> Moderasi Komentar</h2>
             <p>Lihat dan hapus komentar dari seluruh novel di sini.</p>
-            <div class="admin-form-group" style="margin-bottom: 20px;">
+            <div class="admin-form-group mb-20">
                 <label for="comment-filter">Filter Komentar (Nama User / Isi Komentar)</label>
                 <input type="text" id="comment-filter" placeholder="Cari komentar...">
             </div>
-            <div id="comment-moderation-list" style="margin-top: 15px;">
+            <div id="comment-moderation-list" class="mt-15">
                 <!-- Daftar semua komentar akan dimuat di sini -->
             </div>
             <div id="comment-pagination" class="pagination"></div>
@@ -175,12 +175,12 @@
             <h2><i class="fas fa-user-slash"></i> Manajemen Banned User</h2>
             <div class="admin-form-group">
                 <label>Ban Nama User Baru</label>
-                <div style="display: flex; gap: 10px;">
+                <div class="flex gap-10">
                     <input type="text" id="ban-name-input" placeholder="Masukkan nama user...">
                     <button onclick="addNewBan()" class="btn-admin btn-danger">Ban!</button>
                 </div>
             </div>
-            <div id="banned-users-list" style="margin-top: 15px;">
+            <div id="banned-users-list" class="mt-15">
                 <!-- Daftar user yang di-ban -->
             </div>
         </div>
@@ -193,7 +193,7 @@
                     <label for="site-logo-input">Logo Website</label>
                     <input type="file" id="site-logo-input" accept="image/*" title="Upload Logo Website">
                     <input type="hidden" id="site-logo-url-hidden">
-                    <img id="logo-preview" src="https://placehold.co/150x50?text=Logo" alt="Pratinjau Logo" style="max-height: 50px; margin-top: 10px; display: block; background: #eee; padding: 5px; border-radius: 4px;">
+                    <img id="logo-preview" src="https://placehold.co/150x50?text=Logo" alt="Pratinjau Logo" class="logo-preview-img">
                 </div>
                 <button type="submit" id="save-branding-btn" class="btn-admin btn-success">Upload & Simpan Logo</button>
             </form>
@@ -226,12 +226,12 @@
         <div class="admin-card">
             <h2><i class="fas fa-database"></i> Backup & Sinkronisasi</h2>
             <p>Gunakan fitur ini untuk memindahkan data (novel baru, komentar, riwayat) antar perangkat.</p>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <div class="flex gap-10 mt-15">
                 <button onclick="exportAllData()" class="btn-admin"><i class="fas fa-download"></i> Export Semua Data (JSON)</button>
-                <input type="file" id="import-file" style="display: none;" onchange="handleImport(this)">
+                <input type="file" id="import-file" class="display-none" onchange="handleImport(this)">
                 <button onclick="document.getElementById('import-file').click()" class="btn-admin"><i class="fas fa-upload"></i> Import Data</button>
             </div>
-            <button onclick="if(confirm('Hapus SEMUA data?')){localStorage.clear(); location.reload();}" class="btn-admin btn-danger" style="margin-top: 10px;">
+            <button onclick="if(confirm('Hapus SEMUA data?')){localStorage.clear(); location.reload();}" class="btn-admin btn-danger mt-10">
                 <i class="fas fa-trash-alt"></i> Reset Seluruh Website
             </button>
         </div>

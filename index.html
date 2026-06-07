@@ -21,7 +21,7 @@
 
     <nav id="main-nav">
         <div class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i> Menu</div>
-        <div class="nav-links-container" style="display: contents;">
+        <div class="nav-links-container display-contents">
             <a href="/" class="nav-link active" data-category="all">All</a>
             <a href="#" class="nav-link" data-category="China">China</a>
             <a href="#" class="nav-link" data-category="Jepang">Jepang</a>
@@ -43,7 +43,7 @@
                     <span class="trending-now-text">TRENDING NOW</span>
                 </a>
                 <h2>Jelajahi Dunia Imajinasi</h2>
-                <p style="margin-bottom: 25px; opacity: 0.9; max-width: 600px;">Temukan ribuan cerita seru dari berbagai belahan dunia dalam satu genggaman.</p>
+                <p class="mb-25 opacity-9 max-w-600">Temukan ribuan cerita seru dari berbagai belahan dunia dalam satu genggaman.</p>
                 <div class="search-bar">
                     <input type="text" id="search-input" placeholder="Masukkan judul novel...">
                     <button id="search-button"><i class="fas fa-search"></i> Cari</button>
@@ -52,27 +52,27 @@
         </section>
 
         <!-- Koleksi Novel Utama sekarang menyusul tepat setelah Search -->
-        <div style="margin-bottom: 40px;">
+        <div class="mb-40">
             <h2 class="category-title">Koleksi Novel</h2>
             <div class="novel-grid" id="novel-grid">
-                <p style="text-align: center; grid-column: 1/-1;">Memuat data dari database...</p>
+                <p class="text-center grid-col-all">Memuat data dari database...</p>
             </div>
         </div>
 
-        <div id="history-section" style="display:none; margin-bottom: 40px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div id="history-section" class="display-none mb-40">
+            <div class="flex justify-between align-center">
                 <h2 class="category-title">Terakhir Dibaca</h2>
-                <button onclick="clearHistory()" style="background:none; border:none; color:orange; cursor:pointer; font-weight: bold;">Hapus Riwayat</button>
+                <button onclick="clearHistory()" class="bg-none border-none text-orange cursor-pointer text-bold">Hapus Riwayat</button>
             </div>
             <div class="novel-grid" id="history-grid"></div>
         </div>
 
-        <div id="favorites-section" style="display:none; margin-bottom: 40px;">
+        <div id="favorites-section" class="display-none mb-40">
             <h2 class="category-title">Novel Favorit</h2>
             <div class="novel-grid" id="favorites-grid"></div>
         </div>
 
-        <div id="latest-updates-section" style="display:none; margin-bottom: 40px;">
+        <div id="latest-updates-section" class="display-none mb-40">
             <h2 class="category-title">Update Bab Terbaru</h2>
             <div class="update-list" id="latest-updates-grid"></div>
         </div>
@@ -90,7 +90,7 @@
             <span><i class="fas fa-eye"></i> Total Kunjungan: <strong id="visit-count">0</strong></span>
             <span><i class="fas fa-users"></i> Pengunjung: <strong id="visitor-count">0</strong></span>
         </div>
-        <p><a href="admin" style="color: #888; text-decoration: none; font-size: 0.8rem;"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
+        <p><a href="admin" class="text-muted no-decoration text-small"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
     </footer>
 
     <button id="back-to-top" class="back-to-top" title="Kembali ke Atas"><i class="fas fa-chevron-up"></i></button>

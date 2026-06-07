@@ -10,6 +10,7 @@ const ASSETS = [
   '/js/modules/auth.js',
   '/js/modules/data-service.js',
   '/js/modules/supabase-client.js',
+  '/js/admin-logic.js',
   '/manifest.json'
 ];
 
@@ -19,13 +20,31 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Pembersihan cache lama saat versi berganti
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Menghapus cache lama:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        const isSupabase = event.request.url.includes('supabase.co');
+        // Hanya cache request GET ke Supabase (Data) atau Image
+        const isSupabaseGet = event.request.url.includes('supabase.co') && event.request.method === 'GET';
+        const isImage = event.request.destination === 'image';
         
-        if (networkResponse.status === 200 && (isSupabase || event.request.destination === 'image')) {
+        if (networkResponse.status === 200 && (isSupabaseGet || isImage)) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -34,7 +53,7 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       }).catch(() => cachedResponse);
 
-      // Strategi: Stale-While-Revalidate
+      // Jika ada di cache, berikan segera dan update di background
       if (cachedResponse) {
         // Update cache di background
         event.waitUntil(fetchPromise);
