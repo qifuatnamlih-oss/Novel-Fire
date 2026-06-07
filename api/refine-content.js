@@ -3,7 +3,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
-  const { content, customPrompt } = req.body || {};
+  if (!req.body) {
+    return res.status(400).json({ error: 'Body request kosong' });
+  }
+
+  const { content, customPrompt } = req.body;
   const API_KEY = process.env.GEMINI_API_KEY?.trim(); // Tambahkan key ini di Vercel Env (trim untuk hapus spasi tak sengaja)
 
   if (!content) {

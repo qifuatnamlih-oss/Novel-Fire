@@ -43,6 +43,13 @@ const AppCache = {
 // Ekspos AppCache ke global agar bisa digunakan oleh admin-logic.js
 window.AppCache = AppCache;
 
+// Utilitas Sanitasi HTML Sederhana
+const sanitize = (str) => {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+};
+
 const state = {
     currentCategory: 'all'
 };
@@ -70,13 +77,14 @@ async function bootstrap() {
     // Load Data Awal
     console.log("Bootstrap: Loading global data...");
     await DataService.loadGlobalData();
+    applyBranding();
     const novelsLoaded = DataService.getNovels();
     console.log(`Bootstrap: Global data loaded. Found ${novelsLoaded ? novelsLoaded.length : 0} novels.`);
 
     // Setup UI Global
     setupCategoryFilters();
 
-    // Accessibility: Fix missing titles in third-party iframes (Translate/Ads)
+    // Accessibility: Fix missing titles in third-party iframes (Translate)
     observeIframeAccessibility();
     setupReadingProgress();
 
@@ -90,6 +98,20 @@ async function bootstrap() {
     console.log("Bootstrap: Initializing router...");
     initRouter();
     console.log("Bootstrap: Bootstrap complete.");
+}
+
+/**
+ * Mengambil URL logo dari penyimpanan dan menerapkannya ke header
+ */
+function applyBranding() {
+    // Mengambil logo dari localStorage (atau nantinya dari Supabase settings)
+    const savedLogo = localStorage.getItem('site_logo_url');
+    const headerLink = document.querySelector('header h1 a');
+    
+    if (savedLogo && headerLink) {
+        // Mengganti teks logo dengan elemen gambar jika logo tersedia
+        headerLink.innerHTML = `<img src="${savedLogo}" alt="NovelFire Logo" class="header-logo">`;
+    }
 }
 
 function initRouter() {
@@ -167,9 +189,9 @@ function renderHome() {
                 <button class="fav-btn" onclick="event.preventDefault(); event.stopPropagation();" title="Tambah ke Favorit" aria-label="Tambah ke Favorit">
                     <i class="far fa-heart"></i>
                 </button>
-                <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${novel.title}" width="150" height="200">
-                <h3>${novel.title}</h3>
-                <p class="author-link">${novel.author || 'Anonim'}</p>
+                <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${sanitize(novel.title)}" width="150" height="200">
+                <h3>${sanitize(novel.title)}</h3>
+                <p class="author-link">${sanitize(novel.author || 'Anonim')}</p>
                 <div class="rating">
                     <i class="fas fa-star"></i> 4.5
                 </div>
@@ -296,7 +318,7 @@ function setupCategoryFilters() {
 }
 
 /**
- * Memastikan semua iframe (seperti dari Google Translate/Ads) memiliki atribut title
+ * Memastikan semua iframe (seperti dari Google Translate) memiliki atribut title
  * agar memenuhi standar aksesibilitas (WCAG).
  */
 function observeIframeAccessibility() {
