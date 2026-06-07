@@ -82,7 +82,7 @@ async function bootstrap() {
 
     // PWA & UI Global
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
+        navigator.serviceWorker.register('sw.js').catch(console.error);
     }
     console.log("Bootstrap: Service Worker registration attempted.");
 
