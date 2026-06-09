@@ -1,6 +1,7 @@
 import { initSupabase } from './modules/supabase-client.js';
 import * as AuthService from './modules/auth.js';
 import * as DataService from './modules/data-service.js';
+import * as HistoryManager from './modules/history-manager.js';
 
 // Inisialisasi Google Translate tetap global agar SDK Google bisa memanggilnya
 window.googleTranslateElementInit = function() {
@@ -83,6 +84,10 @@ async function bootstrap() {
 
     // Setup UI Global
     setupCategoryFilters();
+    setupSearch();
+    renderHistory();
+    loadGlobalSettings();
+    setupTheme();
 
     // Accessibility: Fix missing titles in third-party iframes (Translate)
     observeIframeAccessibility();
@@ -103,15 +108,127 @@ async function bootstrap() {
 /**
  * Mengambil URL logo dari penyimpanan dan menerapkannya ke header
  */
-function applyBranding() {
+function applyBranding(logoUrl) {
     // Mengambil logo dari localStorage (atau nantinya dari Supabase settings)
-    const savedLogo = localStorage.getItem('site_logo_url');
+    const url = logoUrl || localStorage.getItem('site_logo_url');
     const headerLink = document.querySelector('header h1 a');
     
-    if (savedLogo && headerLink) {
+    if (url && headerLink) {
         // Mengganti teks logo dengan elemen gambar jika logo tersedia
-        headerLink.innerHTML = `<img src="${savedLogo}" alt="NovelFire Logo" class="header-logo">`;
+        headerLink.innerHTML = `<img src="${url}" alt="NovelFire Logo" class="header-logo">`;
     }
+}
+
+/**
+ * Memuat pengaturan global dari database dan menerapkannya
+ */
+async function loadGlobalSettings() {
+    const supabase = (await import('./modules/supabase-client.js')).getSupabase();
+    const { data } = await supabase.from('settings').select('*');
+    
+    if (!data) return;
+
+    // Terapkan Branding
+    const config = data.find(s => s.key === 'site_config')?.value;
+    if (config?.logo_url) applyBranding(config.logo_url);
+
+    // Terapkan Link Sosial di Footer
+    const social = data.find(s => s.key === 'social_links')?.value;
+    if (social) {
+        if (social.facebook) document.getElementById('footer-fb').href = social.facebook;
+        if (social.twitter) document.getElementById('footer-tw').href = social.twitter;
+        if (social.instagram) document.getElementById('footer-ig').href = social.instagram;
+        if (social.discord) document.getElementById('footer-ds').href = social.discord;
+    }
+
+    // Terapkan Statistik Kunjungan
+    const stats = data.find(s => s.key === 'site_stats')?.value;
+    if (stats) {
+        const vc = document.getElementById('visit-count');
+        const vrc = document.getElementById('visitor-count');
+        if (vc) vc.innerText = stats.total_visits || 0;
+        if (vrc) vrc.innerText = stats.unique_visitors || 0;
+    }
+}
+
+/**
+ * Mengatur fitur pencarian novel
+ */
+function setupSearch() {
+    const input = document.getElementById('search-input');
+    const btn = document.getElementById('search-button');
+    if (!input || !btn) return;
+
+    const handleSearch = () => {
+        const query = input.value.toLowerCase().trim();
+        if (!query) {
+            renderHome();
+            return;
+        }
+        console.log(`Search: Finding novels with term '${query}'`);
+        const allNovels = DataService.getNovels();
+        const filtered = allNovels.filter(n => 
+            n.title.toLowerCase().includes(query) || 
+            (n.author && n.author.toLowerCase().includes(query)) ||
+            (n.category && n.category.toLowerCase().includes(query))
+        );
+        renderHome(filtered);
+        document.getElementById('novel-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    btn.addEventListener('click', handleSearch);
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
+}
+
+/**
+ * Mengatur logika perpindahan tema (Dark Mode) dan efek visual terkait.
+ */
+function setupTheme() {
+    const body = document.body;
+
+    // Muat preferensi tema dari localStorage
+    if (localStorage.getItem('theme') === 'dark') {
+        body.classList.add('dark-mode');
+    }
+
+    document.addEventListener('click', (e) => {
+        const themeBtn = e.target.closest('.nav-dark-mode, #dark-mode-toggle');
+        if (!themeBtn) return;
+
+        const isDark = !body.classList.contains('dark-mode');
+        
+        // 1. Set koordinat klik untuk efek 'reveal' di CSS
+        body.style.setProperty('--click-x', e.clientX + 'px');
+        body.style.setProperty('--click-y', e.clientY + 'px');
+        
+        // 2. Toggle class dan simpan preferensi
+        if (isDark) body.classList.add('dark-mode');
+        else body.classList.remove('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+        // 3. Efek Ikon (Rotasi)
+        const icon = themeBtn.querySelector('i');
+        if (icon) {
+            icon.classList.add('rotate-icon');
+            setTimeout(() => icon.classList.remove('rotate-icon'), 500);
+        }
+
+        // 4. Buat Partikel Cahaya (Sesuai gaya di style.css)
+        for (let i = 0; i < 8; i++) {
+            const p = document.createElement('div');
+            p.className = 'theme-particle';
+            p.style.left = e.clientX + 'px';
+            p.style.top = e.clientY + 'px';
+            
+            const dx = (Math.random() - 0.5) * 200;
+            const dy = (Math.random() - 0.5) * 200;
+            p.style.setProperty('--dx', `${dx}px`);
+            p.style.setProperty('--dy', `${dy}px`);
+            
+            body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+    });
 }
 
 function initRouter() {
@@ -159,20 +276,20 @@ function initRouter() {
     }
 }
 
-function renderHome() {
+function renderHome(novels) {
     const grid = document.getElementById('novel-grid');
     if (!grid) {
         console.error("renderHome: novel-grid element not found.");
         return;
     }
-    console.log("renderHome: Starting to render home page content.");
 
     // Bersihkan kontainer (menghapus skeleton/loading jika ada)
     grid.innerHTML = '';
 
-    let novelsToRender = DataService.getNovels();
-    console.log(`renderHome: Found ${novelsToRender ? novelsToRender.length : 0} novels from DataService.`);
-    if (state.currentCategory !== 'all') {
+    let novelsToRender = novels || DataService.getNovels();
+    
+    // Hanya filter kategori jika kita tidak sedang menampilkan hasil pencarian kustom
+    if (!novels && state.currentCategory !== 'all') {
         novelsToRender = novelsToRender.filter(n => n.category === state.currentCategory);
     }
 
@@ -262,11 +379,20 @@ async function loadAndRenderReader() {
         return; 
     }
 
+    // Simpan ke Riwayat (Bookmark Otomatis)
+    HistoryManager.saveToHistory(novel, chapterIdx);
+
     const chapter = novel.chapters[chapterIdx];
     container.innerHTML = `
         <div class="read-header">
             <h2>${novel.title}</h2>
             <h3>${chapter.title}</h3>
+            <div class="read-actions">
+                <button class="btn-action" onclick="changeFontSize('small')" title="Font Kecil">A-</button>
+                <button class="btn-action" onclick="changeFontSize('medium')" title="Font Normal">A</button>
+                <button class="btn-action" onclick="changeFontSize('large')" title="Font Besar">A+</button>
+                <button class="btn-action" id="tts-btn" onclick="toggleTTS()" title="Baca Bersuara"><i class="fas fa-volume-up"></i></button>
+            </div>
         </div>
         <div class="read-content">
             ${chapter.content.split('\n').map(p => `<p>${p}</p>`).join('')}
@@ -289,18 +415,109 @@ async function loadAndRenderReader() {
         `;
     }
 
-    console.log(`loadAndRenderReader: Successfully rendered chapter "${chapter.title}" from novel "${novel.title}".`);
+    console.log(`loadAndRenderReader: Rendered chapter "${chapter.title}".`);
+}
+
+/**
+ * Fungsi Kontrol Pembaca (Font & TTS)
+ */
+window.changeFontSize = (size) => {
+    const content = document.querySelector('.read-content');
+    if (!content) return;
+    content.classList.remove('font-small', 'font-medium', 'font-large', 'font-xlarge');
+    content.classList.add(`font-${size}`);
+    localStorage.setItem('reader_font_size', size);
+};
+
+let ttsInstance = null;
+window.toggleTTS = () => {
+    const content = document.querySelector('.read-content');
+    const btn = document.getElementById('tts-btn');
+    
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        return;
+    }
+
+    const text = content.innerText;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID';
+    utterance.onend = () => {
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+    };
+
+    btn.classList.add('active');
+    btn.innerHTML = '<i class="fas fa-stop"></i>';
+    window.speechSynthesis.speak(utterance);
+};
+
+/** 
+ * Template untuk item riwayat (reusable UI component)
+ */
+const historyItemTemplate = (item) => `
+    <div class="novel-card-wrapper" id="history-item-${item.id}">
+        <a href="read.html?id=${item.id}&ch=${item.lastChapterIdx}" class="novel-card-link">
+            <div class="novel-card">
+                <img src="${item.image || 'https://via.placeholder.com/150x200'}" alt="${sanitize(item.title)}">
+                <h3>${sanitize(item.title)}</h3>
+                <p class="text-small text-primary">Lanjut: ${sanitize(item.lastChapterTitle)}</p>
+            </div>
+        </a>
+        <button class="btn-delete-history" onclick="handleRemoveHistory(${item.id})" title="Remove from history">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+`;
+
+function renderHistory() {
+    const historyGrid = document.getElementById('history-grid');
+    const historySection = document.getElementById('history-section');
+    if (!historyGrid) return;
+
+    const history = HistoryManager.getHistory();
+    if (history.length === 0) {
+        historySection.classList.add('display-none');
+        return;
+    }
+
+    historySection.classList.remove('display-none');
+    historyGrid.innerHTML = history.map(historyItemTemplate).join('');
+}
+
+window.handleRemoveHistory = (id) => {
+    HistoryManager.removeFromHistory(id);
+    renderHistory();
+};
+
+window.clearHistory = () => {
+    if (confirm('Apakah Anda yakin ingin menghapus semua riwayat membaca?')) {
+        HistoryManager.clearAllHistory();
+        renderHistory();
+    }
 }
 
 function setupReadingProgress() {
     const progressBar = document.getElementById('reading-progress');
-    if (!progressBar) return;
+    const backToTop = document.getElementById('back-to-top');
+    
     window.addEventListener('scroll', () => {
         const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
         const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = (winScroll / height) * 100;
-        progressBar.style.width = scrolled + "%";
+        
+        if (progressBar) progressBar.style.width = scrolled + "%";
+        
+        // Update visibility tombol back-to-top
+        if (backToTop) {
+            if (winScroll > 400) backToTop.classList.add('show');
+            else backToTop.classList.remove('show');
+        }
     });
+
+    backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 }
 
 function setupCategoryFilters() {

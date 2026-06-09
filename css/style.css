@@ -782,6 +782,57 @@ body.dark-mode .update-item { background: var(--white); }
     color: white;
 }
 
+/* Container for the card and the delete button */
+.novel-card-wrapper {
+    position: relative;
+    display: inline-block;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.novel-card-wrapper:hover {
+    transform: translateY(-5px);
+}
+
+/* Animation class for removal */
+.novel-card-wrapper.removing {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+    pointer-events: none;
+}
+
+/* The delete button styling */
+.btn-delete-history {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    background-color: #ef4444; /* Red color */
+    color: white;
+    border: 2px solid var(--light-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn-delete-history:hover {
+    background-color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Ensure the card doesn't overflow and hide the button */
+.novel-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 /* Rating Styles */
 .rating {
     color: #f1c40f;
@@ -1335,6 +1386,13 @@ body.dark-mode .read-content p.highlight {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+.admin-card h2 {
+    margin-top: 0;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
 .admin-form-group { margin-bottom: 15px; }
 .admin-form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
 .admin-form-group input, .admin-form-group textarea, .admin-form-group select {
@@ -1352,6 +1410,27 @@ body.dark-mode .read-content p.highlight {
 .btn-danger { background: #e74c3c; }
 .btn-success { background: #27ae60; }
 
+.btn-admin:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Utility Classes */
+.display-none { display: none !important; }
+.w-full { width: 100% !important; }
+.rounded-full { border-radius: 50px !important; }
+.mb-20 { margin-bottom: 20px !important; }
+.mb-25 { margin-bottom: 25px !important; }
+.mt-5 { margin-top: 5px !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-15 { margin-top: 15px !important; }
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+.text-sm { font-size: 0.85rem !important; }
+.text-muted { color: #888 !important; }
+.bg-muted { background-color: #95a5a6 !important; }
+.no-decoration { text-decoration: none !important; }
+
 /* Admin Table Styles */
 .admin-table {
     width: 100%;
@@ -1365,6 +1444,41 @@ body.dark-mode .read-content p.highlight {
 }
 .admin-table th { background: var(--light-bg); color: var(--text-color); }
 .admin-actions { display: flex; gap: 8px; }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: var(--shadow-strong);
+}
+
+.close-button {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-color);
+}
 
 /* Pagination Styles */
 .pagination {
