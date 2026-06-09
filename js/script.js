@@ -52,7 +52,11 @@ const sanitize = (str) => {
 };
 
 const state = {
-    currentCategory: 'all'
+    currentCategory: 'all',
+    currentNovelData: null,
+    chaptersPerPage: 10,
+    chapterSortOrder: 'asc', // 'asc' untuk Terlama, 'desc' untuk Terbaru
+    chapterSearchQuery: ''
 };
 
 async function bootstrap() {
@@ -335,30 +339,179 @@ async function loadAndRenderDetail(id) {
 
     detailContainer.innerHTML = `
         <div class="detail-header">
-            <img src="${novel.image || 'https://via.placeholder.com/250x350'}" alt="${novel.title}">
+            <img src="${novel.image || 'https://via.placeholder.com/250x350'}" alt="${sanitize(novel.title || 'Novel Cover')}">
             <div class="detail-info">
-                <h1>${novel.title}</h1>
+                <h1>${sanitize(novel.title)}</h1>
                 <span class="tag">${novel.category}</span>
-                <p><strong>Penulis:</strong> ${novel.author || 'Anonim'}</p>
+                <p><strong>Penulis:</strong> ${sanitize(novel.author || 'Anonim')}</p>
                 <div class="rating"><i class="fas fa-star"></i> 4.5</div>
                 <div class="flex gap-10 mt-20">
-                    <button class="btn-read" onclick="location.href='read.html?id=${novel.id}&ch=0'">Mulai Membaca</button>
+                    <button class="btn-read" onclick="location.href='read.html?id=${novel.id}&ch=${state.chapterSortOrder === 'asc' ? 0 : (novel.chapters?.length - 1 || 0)}'">Mulai Membaca</button>
                 </div>
             </div>
         </div>
+        <div class="synopsis admin-card mt-20">
+            <h3>Sinopsis</h3>
+            <p class="synopsis-content" id="synopsis-text">${sanitize(novel.synopsis || 'Tidak ada sinopsis.')}</p>
+            <button class="read-more-btn" onclick="toggleSynopsis()">Baca Selengkapnya</button>
+        </div>
         <div class="chapter-section">
-            <h3>Daftar Bab</h3>
-            <ul class="chapter-list">
-                ${(novel.chapters || []).map((ch, index) => `
-                    <li class="chapter-item" onclick="location.href='read.html?id=${novel.id}&ch=${index}'">
-                        <span>${ch.title}</span>
-                        <i class="fas fa-chevron-right"></i>
-                    </li>
-                `).join('')}
+            <div class="flex justify-between align-center mb-15">
+                <div style="flex: 1;">
+                    <h3>Daftar Bab</h3>
+                    <input type="text" id="chapter-search-input" placeholder="Cari nomor atau judul bab..." 
+                        oninput="handleChapterSearch(this.value)" style="width: 100%; max-width: 300px; padding: 8px; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color);">
+                </div>
+                <div class="sort-controls">
+                    <button id="sort-asc" class="btn-action ${state.chapterSortOrder === 'asc' ? 'active' : ''}" 
+                        onclick="toggleChapterSort('asc')" style="font-size: 0.8rem; padding: 5px 10px;">
+                        <i class="fas fa-sort-amount-down-alt"></i> Terlama
+                    </button>
+                    <button id="sort-desc" class="btn-action ${state.chapterSortOrder === 'desc' ? 'active' : ''}" 
+                        onclick="toggleChapterSort('desc')" style="font-size: 0.8rem; padding: 5px 10px;">
+                        <i class="fas fa-sort-amount-up"></i> Terbaru
+                    </button>
+                </div>
+            </div>
+            <ul class="chapter-list" id="chapter-list-container">
+                <!-- Bab akan dimuat di sini oleh renderDetailChapters -->
             </ul>
         </div>
     `;
+
+    state.currentNovelData = novel;
+    renderDetailChapters(1);
     console.log(`loadAndRenderDetail: Successfully rendered detail for "${novel.title}".`);
+}
+
+/**
+ * Toggle ekspansi sinopsis
+ */
+window.toggleSynopsis = function() {
+    const synopsis = document.getElementById('synopsis-text');
+    const btn = document.querySelector('.read-more-btn');
+    if (!synopsis || !btn) return;
+
+    const isExpanded = synopsis.classList.toggle('expanded');
+    btn.innerText = isExpanded ? 'Sembunyikan' : 'Baca Selengkapnya';
+};
+
+/**
+ * Mengubah urutan bab (Terbaru/Terlama)
+ */
+window.toggleChapterSort = function(order) {
+    if (state.chapterSortOrder === order) return;
+    
+    state.chapterSortOrder = order;
+    
+    // Update visual tombol
+    document.getElementById('sort-asc').classList.toggle('active', order === 'asc');
+    document.getElementById('sort-desc').classList.toggle('active', order === 'desc');
+    
+    renderDetailChapters(1);
+};
+
+/**
+ * Menangani pencarian bab
+ */
+window.handleChapterSearch = function(query) {
+    state.chapterSearchQuery = query.toLowerCase().trim();
+    // Selalu kembali ke halaman 1 saat mencari
+    renderDetailChapters(1);
+};
+
+/**
+ * Merender daftar bab dengan paginasi di halaman detail
+ */
+window.renderDetailChapters = function(page) {
+    const novel = state.currentNovelData;
+    const container = document.getElementById('chapter-list-container');
+    const paginationContainer = document.getElementById('chapter-pagination-detail');
+    
+    if (!novel || !container) return;
+
+    // 1. Map bab dengan index aslinya agar link baca tetap akurat
+    let chapters = (novel.chapters || []).map((ch, idx) => ({ ...ch, originalIndex: idx }));
+
+    // 2. Terapkan Filter Pencarian
+    if (state.chapterSearchQuery) {
+        chapters = chapters.filter(ch => 
+            ch.title.toLowerCase().includes(state.chapterSearchQuery)
+        );
+    }
+
+    // 3. Terapkan Pengurutan
+    if (state.chapterSortOrder === 'desc') {
+        chapters.reverse();
+    }
+
+    const start = (page - 1) * state.chaptersPerPage;
+    const end = start + state.chaptersPerPage;
+    const paginatedChapters = chapters.slice(start, end);
+
+    if (paginatedChapters.length === 0) {
+        container.innerHTML = `<li class="chapter-item">${state.chapterSearchQuery ? 'Bab tidak ditemukan.' : 'Belum ada bab tersedia.'}</li>`;
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = paginatedChapters.map((ch) => {
+        return `
+                    <li class="chapter-item" onclick="location.href='read.html?id=${novel.id}&ch=${ch.originalIndex}'">
+                        <span>${sanitize(ch.title)}</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </li>
+        `;
+    }).join('');
+
+    renderPaginationUI('chapter-pagination-detail', chapters.length, state.chaptersPerPage, page, 'renderDetailChapters');
+};
+
+/**
+ * Fungsi utilitas untuk merender UI Paginasi
+ */
+function renderPaginationUI(containerId, totalItems, perPage, currentPage, callbackName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const totalPages = Math.ceil(totalItems / perPage);
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    if (currentPage > 1) {
+        html += `<button class="btn-page" onclick="${callbackName}(${currentPage - 1})"><i class="fas fa-chevron-left"></i></button>`;
+    }
+
+    const range = [];
+    const delta = 1; // Jumlah halaman yang ditampilkan di kiri/kanan halaman aktif
+
+    range.push(1);
+    if (currentPage > delta + 2) range.push('...');
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+        range.push(i);
+    }
+
+    if (currentPage < totalPages - (delta + 1)) range.push('...');
+    if (totalPages > 1) range.push(totalPages);
+
+    range.forEach(p => {
+        if (p === '...') {
+            html += `<span class="btn-page" style="border:none; background:transparent; cursor:default;">...</span>`;
+        } else {
+            html += `<button class="btn-page ${p === currentPage ? 'active' : ''}" onclick="${callbackName}(${p})">${p}</button>`;
+        }
+    });
+
+    // Tombol Next
+    if (currentPage < totalPages) {
+        html += `<button class="btn-page" onclick="${callbackName}(${currentPage + 1})"><i class="fas fa-chevron-right"></i></button>`;
+    }
+
+    container.innerHTML = html;
 }
 
 async function loadAndRenderReader() {

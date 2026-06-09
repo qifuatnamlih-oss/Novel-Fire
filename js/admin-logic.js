@@ -2,6 +2,13 @@ import { initSupabase, getSupabase } from './modules/supabase-client.js';
 import { loadGlobalData, fetchNovelDetail, getNovels, updateNovelChapters, deleteNovel as dataServiceDeleteNovel, updateNovelDetails, addNovel } from './modules/data-service.js';
 
 // State management
+const sanitize = (str) => {
+    if (!str) return '';
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+};
+
 let currentCommentPage = 1;
 const commentsPerPage = 10;
 let activeNovelIdForChapters = null;
@@ -308,7 +315,7 @@ function renderAdminNovels(filterTerm = '') {
     const filtered = getNovels().filter(n => n.title.toLowerCase().includes(filterTerm.toLowerCase()));
     let html = `<table class="admin-table"><thead><tr><th>Judul</th><th>Aksi</th></tr></thead><tbody>`;
     filtered.forEach(n => {
-        html += `<tr><td>${n.title}</td><td><button onclick="editNovel(${n.id})">Edit</button><button onclick="openChapterManager(${n.id})">Bab</button></td></tr>`;
+        html += `<tr><td>${sanitize(n.title)}</td><td><button class="btn-admin" onclick="editNovel(${n.id})">Edit</button> <button class="btn-admin" onclick="openChapterManager(${n.id})">Bab</button></td></tr>`;
     });
     listContainer.innerHTML = html + '</tbody></table>';
 }

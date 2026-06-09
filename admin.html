@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - NovelFire</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://translate.google.com https://translate.googleapis.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://www.gstatic.com; font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://cdn.jsdelivr.net https://*.google.com https://*.googleapis.com https://*.gstatic.com; frame-src 'self' https://googleads.g.doubleclick.net https://*.google.com;">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e8491d" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
@@ -249,6 +250,26 @@
                     <input type="password" id="upd-password" placeholder="Minimal 6 karakter">
                 </div>
                 <button type="submit" class="btn-admin btn-success">Perbarui Kredensial</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Bab (Dibutuhkan oleh admin-logic.js) -->
+    <div id="edit-chapter-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('edit-chapter-modal').style.display='none'">&times;</span>
+            <h2>Edit Bab</h2>
+            <form id="edit-chapter-form">
+                <input type="hidden" id="edit-chapter-index">
+                <div class="admin-form-group">
+                    <label>Judul Bab</label>
+                    <input type="text" id="edit-chapter-title" required>
+                </div>
+                <div class="admin-form-group">
+                    <label>Konten Bab</label>
+                    <textarea id="edit-chapter-content" rows="15" required></textarea>
+                </div>
+                <button type="submit" class="btn-admin btn-success w-full">Update Bab</button>
             </form>
         </div>
     </div>
