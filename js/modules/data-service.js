@@ -18,7 +18,7 @@ export async function loadGlobalData(options = {}) {
     // Fetch novels
     const { data: novelsData, error: novelsError } = await supabase
         .from('novels')
-        .select('id, title, author, category, image, chapters, synopsis'); 
+        .select('id, title, author, category, image, chapters, description'); 
 
     if (novelsError) {
         console.error("Error loading novels:", novelsError.message);
@@ -67,7 +67,7 @@ export async function fetchNovelDetail(novelId) {
     const supabase = getSupabase();
     const { data, error } = await supabase
         .from('novels')
-        .select('id, title, author, category, image, chapters, synopsis') // Select all necessary fields
+        .select('id, title, author, category, image, chapters, description') // Select all necessary fields
         .eq('id', novelId)
         .single();
 

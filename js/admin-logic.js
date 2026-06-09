@@ -235,7 +235,7 @@ async function editNovel(novelId) {
     document.getElementById('adm-category').value = novel.category || 'China';
     document.getElementById('adm-genre').value = Array.isArray(novel.genre) ? novel.genre.join(', ') : (novel.genre || '');
     document.getElementById('adm-author').value = novel.author || '';
-    document.getElementById('adm-desc').value = novel.synopsis || '';
+    document.getElementById('adm-desc').value = novel.description || '';
     document.getElementById('adm-image-url-hidden').value = novel.image || '';
     
     const preview = document.getElementById('image-preview');
@@ -268,7 +268,7 @@ async function handleNovelFormSubmit(e) {
         category: document.getElementById('adm-category').value,
         genre: document.getElementById('adm-genre').value.split(',').map(g => g.trim()).filter(g => g !== ""),
         author: document.getElementById('adm-author').value,
-        synopsis: document.getElementById('adm-desc').value,
+        description: document.getElementById('adm-desc').value,
         image: document.getElementById('adm-image-url-hidden').value
     };
 
