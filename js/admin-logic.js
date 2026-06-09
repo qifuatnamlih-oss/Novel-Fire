@@ -41,28 +41,32 @@ async function checkSession() {
     const { data: { session }, error } = await supabase.auth.getSession();
     const loginSection = document.getElementById('login-section');
     const adminContent = document.getElementById('admin-content');
+    
+    if (!session) {
+        loginSection.style.display = 'block';
+        adminContent.style.display = 'none';
+        return;
+    }
 
-    const isAdmin = session?.user?.user_metadata?.role === 'admin';
+    // Ambil role langsung dari tabel profiles untuk validasi yang lebih kuat
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
 
-    if (session && !isAdmin) {
+    if (profile?.role !== 'admin') {
         console.warn("Admin: Akses ditolak: User bukan admin. Redirecting to index.html.");
         window.location.href = "index.html";
         return;
     }
-
-    if (session && isAdmin) {
-        console.log("Admin: User is logged in and is an admin.");
-        loginSection.style.display = 'none';
-        adminContent.style.display = 'block';
-        if (getNovels().length > 0) renderAdminNovels();
-        loadSocialSettings();
-        loadSiteSettings();
-        renderVisitorChart();
-    } else {
-        console.log("Admin: User is not logged in or not an admin. Showing login section.");
-        loginSection.style.display = 'block';
-        adminContent.style.display = 'none';
-    }
+    
+    loginSection.style.display = 'none';
+    adminContent.style.display = 'block';
+    if (getNovels().length > 0) renderAdminNovels();
+    loadSocialSettings();
+    loadSiteSettings();
+    renderVisitorChart();
 }
 
 async function handleForgotPassword(e) {

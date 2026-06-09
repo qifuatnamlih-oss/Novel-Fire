@@ -1,4 +1,4 @@
-import { initSupabase } from './modules/supabase-client.js';
+import { initSupabase, getSupabase } from './modules/supabase-client.js';
 import * as AuthService from './modules/auth.js';
 import * as DataService from './modules/data-service.js';
 import * as HistoryManager from './modules/history-manager.js';
@@ -76,6 +76,7 @@ async function bootstrap() {
             AuthService.logout,
             AuthService.login
         );
+        if (user) initNotifications(user.id);
         console.log("Bootstrap: User session checked. User:", user ? user.id : "Guest");
     });
 
@@ -107,6 +108,90 @@ async function bootstrap() {
     console.log("Bootstrap: Initializing router...");
     initRouter();
     console.log("Bootstrap: Bootstrap complete.");
+}
+
+/**
+ * Inisialisasi sistem notifikasi real-time menggunakan supabase.channel()
+ */
+async function initNotifications(userId) {
+    const supabase = getSupabase();
+    const bell = document.getElementById('notif-bell');
+    const dropdown = document.getElementById('notif-dropdown');
+    const list = document.getElementById('notif-list');
+    const countBadge = document.getElementById('notif-count');
+    const wrapper = document.getElementById('notif-wrapper');
+
+    if (!wrapper || !bell) return;
+    wrapper.style.display = 'flex'; // Tampilkan bell hanya jika user login
+
+    // Fungsi untuk memuat data notifikasi dari database
+    const updateNotifUI = async () => {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*, actor:profiles(username)')
+            .eq('receiver_id', userId)
+            .eq('is_read', false)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) return console.error("Error fetching notifications:", error);
+
+        if (data && data.length > 0) {
+            countBadge.innerText = data.length > 9 ? '9+' : data.length;
+            countBadge.classList.remove('display-none');
+            list.innerHTML = data.map(n => `
+                <div class="notif-item">
+                    <div><strong>${sanitize(n.actor?.username || 'Seseorang')}</strong> mengomentari novel favorit Anda.</div>
+                    <div class="notif-time">${new Date(n.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `).join('');
+        } else {
+            countBadge.classList.add('display-none');
+            list.innerHTML = '<p class="text-center text-muted" style="padding: 20px 0; font-size: 0.85rem;">Tidak ada notifikasi baru.</p>';
+        }
+    };
+
+    // Load awal saat halaman dimuat
+    updateNotifUI();
+
+    // BERBAGI REAL-TIME: Mendengarkan perubahan di tabel notifications
+    supabase.channel('public:notifications')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications', 
+            filter: `receiver_id=eq.${userId}` 
+        }, (payload) => {
+            console.log("Notifikasi Baru Diterima!", payload.new);
+            updateNotifUI();
+            
+            // Efek visual: lonceng bergetar sebentar
+            bell.classList.add('rotate-icon');
+            setTimeout(() => bell.classList.remove('rotate-icon'), 500);
+        })
+        .subscribe();
+
+    // Logika Klik Bell: Toggle Dropdown & Mark as Read
+    bell.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const isOpening = dropdown.classList.contains('display-none');
+        dropdown.classList.toggle('display-none');
+        
+        if (isOpening && !countBadge.classList.contains('display-none')) {
+            // Tandai sudah dibaca di database agar tidak muncul lagi
+            const { error } = await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('receiver_id', userId)
+                .eq('is_read', false);
+            
+            if (!error) {
+                setTimeout(() => countBadge.classList.add('display-none'), 1500);
+            }
+        }
+    });
+
+    document.addEventListener('click', () => dropdown.classList.add('display-none'));
 }
 
 /**
@@ -352,7 +437,7 @@ async function loadAndRenderDetail(id) {
         </div>
         <div class="synopsis admin-card mt-20">
             <h3>Sinopsis</h3>
-            <p class="synopsis-content" id="synopsis-text">${sanitize(novel.synopsis || 'Tidak ada sinopsis.')}</p>
+            <p class="synopsis-content" id="synopsis-text">${sanitize(novel.description || 'Tidak ada sinopsis.')}</p>
             <button class="read-more-btn" onclick="toggleSynopsis()">Baca Selengkapnya</button>
         </div>
         <div class="chapter-section">
