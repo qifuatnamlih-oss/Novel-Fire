@@ -90,6 +90,7 @@ async function bootstrap() {
     // Setup UI Global
     setupCategoryFilters();
     setupSearch();
+    setupMobileMenu();
     renderHistory();
     loadGlobalSettings();
     setupTheme();
@@ -241,6 +242,20 @@ async function loadGlobalSettings() {
 }
 
 /**
+ * Mengatur toggle menu navigasi pada tampilan mobile
+ */
+function setupMobileMenu() {
+    const toggle = document.getElementById('menu-toggle');
+    const nav = document.getElementById('main-nav');
+    if (!toggle || !nav) return;
+
+    toggle.addEventListener('click', () => {
+        nav.classList.toggle('mobile-active');
+        console.log("Mobile menu toggled");
+    });
+}
+
+/**
  * Mengatur fitur pencarian novel
  */
 function setupSearch() {
@@ -250,10 +265,18 @@ function setupSearch() {
 
     const handleSearch = () => {
         const query = input.value.toLowerCase().trim();
+        const extraSections = ['history-section', 'favorites-section', 'latest-updates-section'];
+
         if (!query) {
+            extraSections.forEach(id => document.getElementById(id)?.classList.remove('display-none'));
+            renderHistory(); // Refresh visibility based on data
             renderHome();
             return;
         }
+
+        // Sembunyikan bagian lain saat mencari
+        extraSections.forEach(id => document.getElementById(id)?.classList.add('display-none'));
+
         console.log(`Search: Finding novels with term '${query}'`);
         const allNovels = DataService.getNovels();
         const filtered = allNovels.filter(n => 
