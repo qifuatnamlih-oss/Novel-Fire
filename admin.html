@@ -11,32 +11,32 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <div class="pos-absolute right-20 top-10">
-            <div id="google_translate_element"></div>
-        </div>
-        <h1><a href="/">Novel<span>Fire</span> Admin</a></h1>
+    <header class="flex justify-between align-center p-15">
+        <h1><a href="/" title="Kembali ke Beranda">Novel<span>Fire</span> Admin</a></h1>
+        <div id="google_translate_element" class="nav-translate"></div>
     </header>
 
     <div class="container" id="login-section">
         <div class="admin-card admin-login-card">
             <h2 class="text-center"><i class="fas fa-user-shield"></i> NovelFire Admin</h2>
             <p class="text-center text-muted mb-25">Masukkan kredensial Anda untuk mengelola konten.</p>
+            <div id="login-error-msg" class="display-none" style="background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 0.85rem; border: 1px solid #fecaca;"></div>
             <form id="login-form">
                 <div class="admin-form-group mb-20">
                     <label for="login-email">Email Admin</label>
-                    <input type="email" id="login-email" required placeholder="admin@example.com" title="Masukkan email admin">
+                    <input type="email" id="login-email" required placeholder="admin@example.com" title="Masukkan email admin" autofocus autocomplete="username">
                 </div>
                 <div class="admin-form-group">
                     <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required placeholder="********" title="Masukkan password admin">
+                    <input type="password" id="login-password" required placeholder="********" title="Masukkan password admin" autocomplete="current-password">
                     <a href="#" onclick="handleForgotPassword(event)" class="text-sm text-primary display-block mt-5 text-right no-decoration">Lupa Password?</a>
                 </div>
-                <button type="submit" class="btn-admin btn-success w-full">Masuk</button>
+                <button type="submit" id="login-submit-btn" class="btn-admin btn-success w-full">Masuk</button>
             </form>
         </div>
     </div>
@@ -79,7 +79,7 @@
                     <input type="text" id="adm-author" placeholder="Nama Penulis">
                 </div>
                 <div class="admin-form-group">
-                    <label for="adm-image">URL Gambar Cover</label>
+                    <label for="adm-image">Upload Gambar Cover</label>
                     <input type="file" id="adm-image" accept="image/*" title="Pilih file gambar cover">
                     <input type="hidden" id="adm-image-url-hidden"> <!-- Untuk menyimpan URL gambar yang sudah ada saat edit -->
                 </div>
@@ -93,7 +93,7 @@
             </form>
         </div>
 
-        <!-- Chapter Manager Section -->
+       <!--  Chapter Manager Section -->
         <div id="chapter-manager-card" class="admin-card display-none">
             <div class="flex justify-between align-center">
                 <h2 id="chapter-mgr-title">Kelola Bab</h2>
@@ -257,7 +257,7 @@
     <!-- Modal Edit Bab (Dibutuhkan oleh admin-logic.js) -->
     <div id="edit-chapter-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('edit-chapter-modal').style.display='none'">&times;</span>
+            <span class="close-button" id="close-edit-modal">&times;</span>
             <h2>Edit Bab</h2>
             <form id="edit-chapter-form">
                 <input type="hidden" id="edit-chapter-index">
@@ -282,9 +282,21 @@
             <a href="#" id="footer-ig" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
             <a href="#" id="footer-ds" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
         </div>
+        <p><a href="admin.html" class="text-muted no-decoration text-small"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
     </footer>
 
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript">
+        // Inisialisasi wajib untuk Google Translate
+        window.googleTranslateElementInit = function() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'id',
+                includedLanguages: 'en,zh-CN,ja,id', // Menambahkan bahasa yang disertakan agar konsisten dengan script.js
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false // Mencegah banner Google Translate muncul secara otomatis
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script src="js/admin-logic.js" type="module"></script>
 </body>
 </html>

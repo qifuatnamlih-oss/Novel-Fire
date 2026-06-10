@@ -61,6 +61,7 @@ const state = {
 
 async function bootstrap() {
     console.log("Bootstrap: Starting initialization...");
+    let currentUser = null;
     const initialized = await initSupabase();
     if (!initialized) {
         console.error("Bootstrap: Supabase initialization failed. Exiting bootstrap.");
@@ -70,6 +71,7 @@ async function bootstrap() {
 
     // Manajemen Sesi
     await AuthService.checkUserSession((user) => {
+        currentUser = user;
         AuthService.updateAuthUI(
             user,
             AuthService.toggleUserMenu,
@@ -94,6 +96,8 @@ async function bootstrap() {
     renderHistory();
     loadGlobalSettings();
     setupTheme();
+    renderFavorites(currentUser); // Panggil renderFavorites setelah user session diperiksa
+    renderLatestUpdates(); // Panggil renderLatestUpdates
 
     // Accessibility: Fix missing titles in third-party iframes (Translate)
     observeIframeAccessibility();
@@ -430,6 +434,102 @@ function renderHome(novels) {
     console.log(`renderHome: Successfully rendered ${novelsToRender.length} novel cards.`);
 }
 
+/**
+ * Merender daftar novel favorit pengguna.
+ * @param {object|null} currentUser - Objek pengguna saat ini dari Supabase.
+ */
+async function renderFavorites(currentUser) {
+    const favoritesGrid = document.getElementById('favorites-grid');
+    const favoritesSection = document.getElementById('favorites-section');
+    if (!favoritesGrid || !favoritesSection) return;
+
+    favoritesGrid.innerHTML = '<p class="text-center grid-col-all">Memuat novel favorit...</p>';
+    favoritesSection.classList.remove('display-none'); // Tampilkan bagian saat memuat
+
+    if (!currentUser) {
+        favoritesSection.classList.add('display-none');
+        console.log("renderFavorites: Pengguna tidak login, menyembunyikan bagian favorit.");
+        return;
+    }
+
+    // TODO: Implementasi nyata untuk mengambil ID novel favorit pengguna dari Supabase.
+    // Contoh:
+    // const { data: userFavorites, error } = await getSupabase().from('user_favorites').select('novel_id').eq('user_id', currentUser.id);
+    // const favoriteNovelIds = userFavorites ? userFavorites.map(f => f.novel_id) : [];
+
+    // Placeholder: Menggunakan ID favorit contoh untuk demonstrasi
+    const allNovels = DataService.getNovels();
+    const favoriteNovelIds = [1, 3, 5]; // Ganti dengan ID yang benar-benar diambil dari database
+
+    const favoriteNovels = allNovels.filter(novel => favoriteNovelIds.includes(novel.id));
+
+    if (favoriteNovels.length === 0) {
+        favoritesGrid.innerHTML = '<p class="text-center grid-col-all">Anda belum menambahkan novel ke favorit.</p>';
+        // favoritesSection.classList.add('display-none'); // Opsional: sembunyikan jika kosong
+        console.log("renderFavorites: Tidak ada novel favorit ditemukan untuk pengguna.");
+        return;
+    }
+
+    favoritesGrid.innerHTML = favoriteNovels.map(novel => `
+        <a href="detail.html?id=${novel.id}" class="novel-card-link">
+            <div class="novel-card">
+                <button class="fav-btn active" onclick="event.preventDefault(); event.stopPropagation();" title="Hapus dari Favorit" aria-label="Hapus dari Favorit">
+                    <i class="fas fa-heart"></i>
+                </button>
+                <img src="${novel.image || 'https://via.placeholder.com/150x200'}" alt="${sanitize(novel.title)}" width="150" height="200" loading="lazy">
+                <h3>${sanitize(novel.title)}</h3>
+                <p class="author-link">${sanitize(novel.author || 'Anonim')}</p>
+                <div class="rating">
+                    <i class="fas fa-star"></i> 4.5
+                </div>
+            </div>
+        </a>
+    `).join('');
+    console.log(`renderFavorites: Berhasil merender ${favoriteNovels.length} kartu novel favorit.`);
+}
+
+/**
+ * Merender daftar bab terbaru atau novel yang baru diupdate.
+ */
+async function renderLatestUpdates() {
+    const latestUpdatesGrid = document.getElementById('latest-updates-grid');
+    const latestUpdatesSection = document.getElementById('latest-updates-section');
+    if (!latestUpdatesGrid || !latestUpdatesSection) return;
+
+    latestUpdatesGrid.innerHTML = '<p class="text-center grid-col-all">Memuat update terbaru...</p>';
+    latestUpdatesSection.classList.remove('display-none'); // Tampilkan bagian saat memuat
+
+    const allNovels = DataService.getNovels();
+    if (!allNovels || allNovels.length === 0) {
+        latestUpdatesGrid.innerHTML = '<p class="text-center grid-col-all">Tidak ada update terbaru yang ditemukan.</p>';
+        latestUpdatesSection.classList.add('display-none');
+        console.log("renderLatestUpdates: Tidak ada novel tersedia untuk update terbaru.");
+        return;
+    }
+
+    // Urutkan novel berdasarkan properti 'updated_at' atau 'created_at' (diasumsikan ada pada objek novel)
+    const sortedNovels = [...allNovels].sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0));
+    const recentUpdates = sortedNovels.slice(0, 5); // Ambil 5 update terbaru
+
+    if (recentUpdates.length === 0) {
+        latestUpdatesGrid.innerHTML = '<p class="text-center grid-col-all">Tidak ada update terbaru yang ditemukan.</p>';
+        latestUpdatesSection.classList.add('display-none');
+        console.log("renderLatestUpdates: Tidak ada update terbaru setelah pengurutan.");
+        return;
+    }
+
+    latestUpdatesGrid.innerHTML = recentUpdates.map(novel => `
+        <a href="detail.html?id=${novel.id}" class="update-item">
+            <div class="update-info">
+                <h4>${sanitize(novel.title)}</h4>
+                <p>Bab Terbaru: ${sanitize(novel.chapters && novel.chapters.length > 0 ? novel.chapters[novel.chapters.length - 1].title : 'N/A')}</p>
+            </div>
+            <span class="update-category">${sanitize(novel.category)}</span>
+        </a>
+    `).join('');
+    console.log(`renderLatestUpdates: Berhasil merender ${recentUpdates.length} item update terbaru.`);
+}
+
 async function loadAndRenderDetail(id) {
     const detailContainer = document.getElementById('novel-detail');
     if (!detailContainer) {
@@ -649,10 +749,10 @@ async function loadAndRenderReader() {
             <h2>${novel.title}</h2>
             <h3>${chapter.title}</h3>
             <div class="read-actions">
-                <button class="btn-action" onclick="changeFontSize('small')" title="Font Kecil">A-</button>
-                <button class="btn-action" onclick="changeFontSize('medium')" title="Font Normal">A</button>
-                <button class="btn-action" onclick="changeFontSize('large')" title="Font Besar">A+</button>
-                <button class="btn-action" id="tts-btn" onclick="toggleTTS()" title="Baca Bersuara"><i class="fas fa-volume-up"></i></button>
+                <button type="button" class="btn-action" onclick="changeFontSize('small')" title="Font Kecil" aria-label="Gunakan Font Kecil">A-</button>
+                <button type="button" class="btn-action" onclick="changeFontSize('medium')" title="Font Normal" aria-label="Gunakan Font Normal">A</button>
+                <button type="button" class="btn-action" onclick="changeFontSize('large')" title="Font Besar" aria-label="Gunakan Font Besar">A+</button>
+                <button type="button" class="btn-action" id="tts-btn" onclick="toggleTTS()" title="Baca Bersuara" aria-label="Aktifkan Baca Bersuara"><i class="fas fa-volume-up"></i></button>
             </div>
         </div>
         <div class="read-content">
@@ -664,13 +764,13 @@ async function loadAndRenderReader() {
     const navContainer = document.getElementById('reader-nav');
     if (navContainer) {
         navContainer.innerHTML = `
-            <button class="btn-read" ${chapterIdx === 0 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx - 1}'"`} title="Bab Sebelumnya">
+            <button type="button" class="btn-read" ${chapterIdx === 0 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx - 1}'"`} title="Bab Sebelumnya" aria-label="Halaman Sebelumnya">
                 <i class="fas fa-arrow-left"></i> Sebelumnya
             </button>
-            <button class="btn-read" onclick="location.href='detail.html?id=${novelId}'" title="Kembali ke Daftar Bab">
+            <button type="button" class="btn-read" onclick="location.href='detail.html?id=${novelId}'" title="Kembali ke Daftar Bab" aria-label="Kembali ke Daftar Bab">
                 <i class="fas fa-list"></i> Daftar Bab
             </button>
-            <button class="btn-read" ${chapterIdx >= novel.chapters.length - 1 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx + 1}'"`} title="Bab Selanjutnya">
+            <button type="button" class="btn-read" ${chapterIdx >= novel.chapters.length - 1 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx + 1}'"`} title="Bab Selanjutnya" aria-label="Halaman Selanjutnya">
                 Selanjutnya <i class="fas fa-arrow-right"></i>
             </button>
         `;
@@ -769,7 +869,10 @@ function setupReadingProgress() {
         const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = (winScroll / height) * 100;
         
-        if (progressBar) progressBar.style.width = scrolled + "%";
+        if (progressBar) {
+            progressBar.style.width = scrolled + "%";
+            progressBar.setAttribute('aria-valuenow', Math.round(scrolled));
+        }
         
         // Update visibility tombol back-to-top
         if (backToTop) {
@@ -784,6 +887,10 @@ function setupReadingProgress() {
 function setupCategoryFilters() {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
+            const grid = document.getElementById('novel-grid');
+            // Jika tidak ada grid (misal di halaman read/detail), biarkan link mengarah ke home
+            if (!grid) return; 
+
             e.preventDefault();
             state.currentCategory = e.currentTarget.dataset.category;
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
