@@ -534,7 +534,7 @@ async function loadAndRenderDetail(id) {
             <div class="flex justify-between align-center mb-15">
                 <div style="flex: 1;">
                     <h3>Daftar Bab</h3>
-                    <input type="text" id="chapter-search-input" placeholder="Cari nomor atau judul bab..." 
+                    <input type="text" id="chapter-search-input" placeholder="Cari nomor atau judul bab..." aria-label="Cari bab" title="Cari bab" 
                         oninput="handleChapterSearch(this.value)" style="width: 100%; max-width: 300px; padding: 8px; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color);">
                 </div>
                 <div class="sort-controls">

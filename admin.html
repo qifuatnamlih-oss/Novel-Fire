@@ -72,11 +72,11 @@
                 </div>
                 <div class="admin-form-group">
                     <label for="adm-genre">Genre (Pisahkan dengan koma)</label>
-                    <input type="text" id="adm-genre" placeholder="Fantasy, Action">
+                    <input type="text" id="adm-genre" placeholder="Fantasy, Action" title="Genre Novel">
                 </div>
                 <div class="admin-form-group">
                     <label for="adm-author">Penulis</label>
-                    <input type="text" id="adm-author" placeholder="Nama Penulis">
+                    <input type="text" id="adm-author" placeholder="Nama Penulis" title="Nama Penulis">
                 </div>
                 <div class="admin-form-group">
                     <label for="adm-image">Upload Gambar Cover</label>
@@ -103,12 +103,12 @@
             <form id="chapter-form">
                 <input type="hidden" id="ch-id"> <!-- ID bab yang sedang diedit -->
                 <div class="admin-form-group">
-                    <label>Judul Bab</label>
-                    <input type="text" id="ch-title" required placeholder="Contoh: Bab 5: Pertemuan Tak Terduga">
+                    <label for="ch-title">Judul Bab</label>
+                    <input type="text" id="ch-title" required placeholder="Contoh: Bab 5: Pertemuan Tak Terduga" title="Judul Bab">
                 </div>
                 <div class="admin-form-group">
-                    <label>Konten Bab</label>
-                    <textarea id="ch-content" rows="10" required placeholder="Tuliskan isi cerita di sini..."></textarea>
+                    <label for="ch-content">Konten Bab</label>
+                    <textarea id="ch-content" rows="10" required placeholder="Tuliskan isi cerita di sini..." title="Isi Cerita Bab"></textarea>
                 </div>
                 <button type="submit" id="ch-submit-btn" class="btn-admin btn-success">Simpan Bab</button>
                 <button type="button" id="ch-cancel-btn" class="btn-admin" style="display:none; background:#95a5a6;" onclick="resetChapterForm()">Batal</button>
@@ -126,12 +126,12 @@
                     <label for="bulk-overwrite-toggle" style="font-size: 0.85rem; margin-bottom: 0; color: #2980b9; font-weight: bold;">Update bab yang judulnya sama & tambah bab baru (Perbaikan Masal)</label>
                 </div>
                 <div class="admin-form-group" id="custom-prompt-container" style="display: none;">
-                    <label style="font-size: 0.85rem;">Prompt AI Kustom (Opsional)</label>
-                    <textarea id="bulk-ai-prompt" rows="3" placeholder="Contoh: Ubah gaya bahasa menjadi lebih puitis dan gunakan sapaan 'Kakanda' untuk tokoh utama." style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
+                    <label for="bulk-ai-prompt" style="font-size: 0.85rem;">Prompt AI Kustom (Opsional)</label>
+                    <textarea id="bulk-ai-prompt" rows="3" placeholder="Contoh: Ubah gaya bahasa menjadi lebih puitis..." style="font-size: 0.85rem; margin-bottom: 10px;" title="Prompt AI Kustom"></textarea>
                 </div>
                 <div class="admin-form-group">
                     <label for="bulk-custom-note" style="font-size: 0.85rem;">Catatan Penerjemah Kustom (Opsional)</label>
-                    <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh NovelFire Team. Selamat membaca!" style="font-size: 0.85rem; margin-bottom: 10px;"></textarea>
+                    <textarea id="bulk-custom-note" rows="2" placeholder="Contoh: Bab ini diterjemahkan oleh..." style="font-size: 0.85rem; margin-bottom: 10px;" title="Catatan Penerjemah"></textarea>
                 </div>
                 <input type="file" id="bulk-chapter-file" accept=".txt" style="font-size: 0.8rem; margin-bottom: 10px;" title="Pilih file teks bab masal" aria-label="Pilih file teks bab masal">
                 <div id="bulk-upload-status" style="margin-bottom: 10px; text-align: center; font-style: italic; color: #888; display: none;">
@@ -151,8 +151,8 @@
         <div class="admin-card">
             <h2><i class="fas fa-tasks"></i> Kelola Novel Kustom</h2>
             <div class="admin-form-group" style="margin-bottom: 20px;">
-                <label for="novel-search">Cari Novel</label>
-                <input type="text" id="novel-search" placeholder="Cari berdasarkan judul atau kategori...">
+                <label for="novel-search">Cari Novel Berdasarkan Judul</label>
+                <input type="text" id="novel-search" placeholder="Cari berdasarkan judul atau kategori..." title="Cari Novel">
             </div>
             <div id="admin-novels-list">
                 <!-- Tabel novel kustom akan dimuat di sini -->
@@ -163,8 +163,8 @@
             <h2><i class="fas fa-comments"></i> Moderasi Komentar</h2>
             <p>Lihat dan hapus komentar dari seluruh novel di sini.</p>
             <div class="admin-form-group mb-20">
-                <label for="comment-filter">Filter Komentar (Nama User / Isi Komentar)</label>
-                <input type="text" id="comment-filter" placeholder="Cari komentar...">
+                <label for="comment-filter">Filter Komentar Berdasarkan Nama atau Isi</label>
+                <input type="text" id="comment-filter" placeholder="Cari komentar..." title="Filter Komentar">
             </div>
             <div id="comment-moderation-list" class="mt-15">
                 <!-- Daftar semua komentar akan dimuat di sini -->
@@ -175,9 +175,9 @@
         <div class="admin-card">
             <h2><i class="fas fa-user-slash"></i> Manajemen Banned User</h2>
             <div class="admin-form-group">
-                <label>Ban Nama User Baru</label>
+                <label for="ban-name-input">Ban Nama User Baru</label>
                 <div class="flex gap-10">
-                    <input type="text" id="ban-name-input" placeholder="Masukkan nama user...">
+                    <input type="text" id="ban-name-input" placeholder="Masukkan nama user..." title="Masukkan nama user yang akan di-ban">
                     <button onclick="addNewBan()" class="btn-admin btn-danger">Ban!</button>
                 </div>
             </div>
@@ -205,20 +205,20 @@
             <p>Tautan ini akan muncul di seluruh footer halaman NovelFire.</p>
             <form id="social-settings-form">
                 <div class="admin-form-group">
-                    <label><i class="fab fa-facebook-f"></i> Facebook URL</label>
-                    <input type="url" id="social-fb" placeholder="https://facebook.com/yourpage">
+                    <label for="social-fb"><i class="fab fa-facebook-f"></i> Facebook URL</label>
+                    <input type="url" id="social-fb" placeholder="https://facebook.com/yourpage" title="Facebook URL">
                 </div>
                 <div class="admin-form-group">
-                    <label><i class="fab fa-twitter"></i> Twitter/X URL</label>
-                    <input type="url" id="social-tw" placeholder="https://twitter.com/yourprofile">
+                    <label for="social-tw"><i class="fab fa-twitter"></i> Twitter/X URL</label>
+                    <input type="url" id="social-tw" placeholder="https://twitter.com/yourprofile" title="Twitter URL">
                 </div>
                 <div class="admin-form-group">
-                    <label><i class="fab fa-instagram"></i> Instagram URL</label>
-                    <input type="url" id="social-ig" placeholder="https://instagram.com/yourprofile">
+                    <label for="social-ig"><i class="fab fa-instagram"></i> Instagram URL</label>
+                    <input type="url" id="social-ig" placeholder="https://instagram.com/yourprofile" title="Instagram URL">
                 </div>
                 <div class="admin-form-group">
-                    <label><i class="fab fa-discord"></i> Discord Invite URL</label>
-                    <input type="url" id="social-ds" placeholder="https://discord.gg/yourserver">
+                    <label for="social-ds"><i class="fab fa-discord"></i> Discord Invite URL</label>
+                    <input type="url" id="social-ds" placeholder="https://discord.gg/yourserver" title="Discord URL">
                 </div>
                 <button type="submit" class="btn-admin btn-success">Simpan Tautan Sosial</button>
             </form>
@@ -242,12 +242,12 @@
             <p>Perbarui email atau password akun admin Anda yang terdaftar di Supabase.</p>
             <form id="update-admin-form">
                 <div class="admin-form-group">
-                    <label>Email Baru (Kosongkan jika tidak ingin diubah)</label>
-                    <input type="email" id="upd-email" placeholder="emailbaru@example.com">
+                    <label for="upd-email">Email Baru (Kosongkan jika tidak ingin diubah)</label>
+                    <input type="email" id="upd-email" placeholder="emailbaru@example.com" title="Email Baru Admin">
                 </div>
                 <div class="admin-form-group">
-                    <label>Password Baru (Kosongkan jika tidak ingin diubah)</label>
-                    <input type="password" id="upd-password" placeholder="Minimal 6 karakter">
+                    <label for="upd-password">Password Baru (Kosongkan jika tidak ingin diubah)</label>
+                    <input type="password" id="upd-password" placeholder="Minimal 6 karakter" title="Password Baru Admin">
                 </div>
                 <button type="submit" class="btn-admin btn-success">Perbarui Kredensial</button>
             </form>
@@ -282,7 +282,7 @@
             <a href="#" id="footer-ig" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
             <a href="#" id="footer-ds" class="social-icon" title="Discord"><i class="fab fa-discord"></i></a>
         </div>
-        <p><a href="admin.html" class="text-muted no-decoration text-small"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
+        <p><a href="admin" class="text-muted no-decoration text-small"><i class="fas fa-user-shield"></i> Admin Dashboard</a></p>
     </footer>
 
     <script type="text/javascript">
