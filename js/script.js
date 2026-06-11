@@ -2,6 +2,8 @@ import { initSupabase, getSupabase } from './modules/supabase-client.js';
 import * as AuthService from './modules/auth.js';
 import * as DataService from './modules/data-service.js';
 import * as HistoryManager from './modules/history-manager.js';
+import { AppCache } from './modules/cache.js';
+import { sanitize, setupReadingProgress, observeIframeAccessibility } from './modules/utils.js';
 
 // Inisialisasi Google Translate tetap global agar SDK Google bisa memanggilnya
 window.googleTranslateElementInit = function() {
@@ -13,43 +15,8 @@ window.googleTranslateElementInit = function() {
     }, 'google_translate_element');
 }
 
-// Utilitas Caching Sederhana
-const AppCache = {
-    set(key, data, ttlMinutes = 15) {
-        try {
-        const expiry = Date.now() + (ttlMinutes * 60 * 1000);
-        localStorage.setItem(`cache_${key}`, JSON.stringify({ data, expiry }));
-        } catch (e) { console.warn("AppCache: Gagal menulis ke localStorage (mungkin diblokir browser)"); }
-    },
-    get(key) {
-        try {
-        const itemStr = localStorage.getItem(`cache_${key}`);
-        if (!itemStr) return null;
-        const item = JSON.parse(itemStr);
-        if (Date.now() > item.expiry) {
-            localStorage.removeItem(`cache_${key}`);
-            return null;
-        }
-        return item.data;
-        } catch (e) { return null; }
-    },
-    clearAll() {
-        Object.keys(localStorage)
-            .filter(key => key.startsWith('cache_'))
-            .forEach(key => localStorage.removeItem(key));
-        console.log('AppCache: Local storage cache dibersihkan.');
-    }
-};
-
 // Ekspos AppCache ke global agar bisa digunakan oleh admin-logic.js
 window.AppCache = AppCache;
-
-// Utilitas Sanitasi HTML Sederhana
-const sanitize = (str) => {
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-};
 
 const state = {
     currentCategory: 'all',
@@ -858,31 +825,7 @@ window.clearHistory = () => {
         HistoryManager.clearAllHistory();
         renderHistory();
     }
-}
-
-function setupReadingProgress() {
-    const progressBar = document.getElementById('reading-progress');
-    const backToTop = document.getElementById('back-to-top');
-    
-    window.addEventListener('scroll', () => {
-        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = (winScroll / height) * 100;
-        
-        if (progressBar) {
-            progressBar.style.width = scrolled + "%";
-            progressBar.setAttribute('aria-valuenow', Math.round(scrolled));
-        }
-        
-        // Update visibility tombol back-to-top
-        if (backToTop) {
-            if (winScroll > 400) backToTop.classList.add('show');
-            else backToTop.classList.remove('show');
-        }
-    });
-
-    backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-}
+};
 
 function setupCategoryFilters() {
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -900,20 +843,6 @@ function setupCategoryFilters() {
         });
     });
     console.log("setupCategoryFilters: All nav-links have click listeners.");
-}
-
-/**
- * Memastikan semua iframe (seperti dari Google Translate) memiliki atribut title
- * agar memenuhi standar aksesibilitas (WCAG).
- */
-function observeIframeAccessibility() {
-    const observer = new MutationObserver(() => {
-        const iframes = document.querySelectorAll('iframe:not([title])');
-        iframes.forEach(iframe => {
-            iframe.setAttribute('title', 'Konten Pihak Ketiga');
-        });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);

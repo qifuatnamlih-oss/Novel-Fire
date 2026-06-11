@@ -3,15 +3,13 @@
  * @module HistoryManager
  */
 
-import { sanitize } from './utils.js';
-
 /**
  * Menyimpan bab terakhir yang dibaca ke riwayat.
  * @param {object} novel - Objek novel yang sedang dibaca.
  * @param {number} chIdx - Indeks bab yang terakhir dibaca.
  */
 export function saveToHistory(novel, chIdx) {
-    let history = JSON.parse(localStorage.getItem('novel_history') || '[]');
+    let history = getHistory();
     // Hapus jika novel sudah ada di riwayat (untuk memajukannya ke atas)
     history = history.filter(item => item.id !== novel.id);
     

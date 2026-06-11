@@ -13,8 +13,12 @@ export async function initSupabase() {
             const response = await fetch('/api/get-config');
             if (!response.ok) throw new Error("Gagal mengambil konfigurasi dari server");
             
-            const { url, key } = await response.json();
-            if (!url || !key) throw new Error("Konfigurasi URL atau Key tidak ditemukan");
+            const config = await response.json();
+            const { url, key } = config;
+            
+            if (!url || !key) {
+                throw new Error("Konfigurasi URL atau Key tidak ditemukan di response server");
+            }
 
             // Mendeteksi library Supabase (biasanya dari CDN)
             const lib = (typeof supabase !== 'undefined' && supabase.createClient) ? supabase : window.supabase;
@@ -29,7 +33,7 @@ export async function initSupabase() {
             throw new Error("Library Supabase tidak ditemukan di scope global");
         } catch (error) {
             console.error("Gagal menginisialisasi Supabase:", error.message);
-            supabaseInitPromise = null;
+            supabaseInitPromise = null; // Memungkinkan percobaan ulang jika gagal
             return false;
         }
     })();
@@ -38,5 +42,8 @@ export async function initSupabase() {
 }
 
 export function getSupabase() {
+    if (!window.supabase) {
+        console.warn("getSupabase dipanggil sebelum inisialisasi selesai.");
+    }
     return window.supabase;
 }

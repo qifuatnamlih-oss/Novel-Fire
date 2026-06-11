@@ -10,6 +10,7 @@
  * @returns {string} String yang sudah disanitasi.
  */
 export const sanitize = (str) => {
+    if (!str) return '';
     const temp = document.createElement('div');
     temp.textContent = str;
     return temp.innerHTML;
@@ -20,13 +21,26 @@ export const sanitize = (str) => {
  */
 export function setupReadingProgress() {
     const progressBar = document.getElementById('reading-progress');
-    if (!progressBar) return;
+    const backToTop = document.getElementById('back-to-top');
+    if (!progressBar && !backToTop) return;
+
     window.addEventListener('scroll', () => {
         const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
         const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = (winScroll / height) * 100;
-        progressBar.style.width = scrolled + "%";
+        
+        if (progressBar) {
+            progressBar.style.width = scrolled + "%";
+            progressBar.setAttribute('aria-valuenow', Math.round(scrolled));
+        }
+
+        if (backToTop) {
+            if (winScroll > 400) backToTop.classList.add('show');
+            else backToTop.classList.remove('show');
+        }
     }, { passive: true }); // Menggunakan passive listener untuk performa scroll yang lebih baik
+
+    backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 }
 
 /**

@@ -16,9 +16,13 @@ export async function loadGlobalData(options = {}) {
     }
 
     // Fetch novels
-    const { data: novelsData, error: novelsError } = await supabase
+    let query = supabase
         .from('novels')
-        .select('id, title, author, category, image, chapters, description'); 
+        .select('id, title, author, category, image, chapters, description');
+
+    if (options.limit) query = query.limit(options.limit);
+
+    const { data: novelsData, error: novelsError } = await query;
 
     if (novelsError) {
         console.error("Error loading novels:", novelsError.message);

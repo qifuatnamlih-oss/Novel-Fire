@@ -43,6 +43,3 @@ export const AppCache = {
         console.log('AppCache: Local storage cache dibersihkan.');
     }
 };
-
-// Ini adalah placeholder. admin-logic.js harus mengimpor AppCache langsung.
-// window.AppCache = AppCache; 

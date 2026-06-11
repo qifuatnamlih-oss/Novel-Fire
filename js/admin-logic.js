@@ -1,15 +1,9 @@
 import { initSupabase, getSupabase } from './modules/supabase-client.js';
 import { loadGlobalData, fetchNovelDetail, getNovels, updateNovelChapters, deleteNovel as dataServiceDeleteNovel, updateNovelDetails, addNovel } from './modules/data-service.js';
 import { AppCache } from './modules/cache.js';
+import { sanitize } from './modules/utils.js';
 
 // State management
-const sanitize = (str) => {
-    if (!str) return '';
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-};
-
 let currentCommentPage = 1;
 const commentsPerPage = 10;
 let activeNovelIdForChapters = null;
