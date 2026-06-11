@@ -54,7 +54,7 @@ async function checkSession() {
 
     if (profile?.role !== 'admin') {
         console.warn("Admin: Akses ditolak: User bukan admin. Redirecting to index.html.");
-        window.location.href = "index.html";
+        window.location.href = "index";
         return;
     }
     
