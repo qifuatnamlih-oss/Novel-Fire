@@ -51,7 +51,7 @@ export function updateAuthUI(user, handleLogout, handleLogin) {
             <div id="user-menu" class="user-menu-dropdown display-none">
                 <p>Halo, <strong>${user.user_metadata?.full_name || 'User'}</strong></p>
                 <hr>
-                ${isAdmin ? '<a href="admin.html"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
+                ${isAdmin ? '<a href="admin"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
                 <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         `;

@@ -397,7 +397,7 @@ function renderHome(novels) {
 
     // Generate HTML untuk setiap novel
     grid.innerHTML = novelsToRender.map(novel => `
-        <a href="detail.html?id=${novel.id}" class="novel-card-link">
+        <a href="detail?id=${novel.id}" class="novel-card-link">
             <div class="novel-card">
                 <button class="fav-btn" onclick="event.preventDefault(); event.stopPropagation();" title="Tambah ke Favorit" aria-label="Tambah ke Favorit">
                     <i class="far fa-heart"></i>
@@ -451,7 +451,7 @@ async function renderFavorites(currentUser) {
     }
 
     favoritesGrid.innerHTML = favoriteNovels.map(novel => `
-        <a href="detail.html?id=${novel.id}" class="novel-card-link">
+        <a href="detail?id=${novel.id}" class="novel-card-link">
             <div class="novel-card">
                 <button class="fav-btn active" onclick="event.preventDefault(); event.stopPropagation();" title="Hapus dari Favorit" aria-label="Hapus dari Favorit">
                     <i class="fas fa-heart"></i>
@@ -499,7 +499,7 @@ async function renderLatestUpdates() {
     }
 
     latestUpdatesGrid.innerHTML = recentUpdates.map(novel => `
-        <a href="detail.html?id=${novel.id}" class="update-item">
+        <a href="detail?id=${novel.id}" class="update-item">
             <div class="update-info">
                 <h4>${sanitize(novel.title)}</h4>
                 <p>Bab Terbaru: ${sanitize(novel.chapters && novel.chapters.length > 0 ? novel.chapters[novel.chapters.length - 1].title : 'N/A')}</p>
@@ -534,7 +534,7 @@ async function loadAndRenderDetail(id) {
                 <p><strong>Penulis:</strong> ${sanitize(novel.author || 'Anonim')}</p>
                 <div class="rating"><i class="fas fa-star"></i> 4.5</div>
                 <div class="flex gap-10 mt-20">
-                    <button class="btn-read" onclick="location.href='read.html?id=${novel.id}&ch=${state.chapterSortOrder === 'asc' ? 0 : (novel.chapters?.length - 1 || 0)}'">Mulai Membaca</button>
+                    <button class="btn-read" onclick="location.href='read?id=${novel.id}&ch=${state.chapterSortOrder === 'asc' ? 0 : (novel.chapters?.length - 1 || 0)}'">Mulai Membaca</button>
                 </div>
             </div>
         </div>
@@ -645,7 +645,7 @@ window.renderDetailChapters = function(page) {
 
     container.innerHTML = paginatedChapters.map((ch) => {
         return `
-                    <li class="chapter-item" onclick="location.href='read.html?id=${novel.id}&ch=${ch.originalIndex}'">
+                    <li class="chapter-item" onclick="location.href='read?id=${novel.id}&ch=${ch.originalIndex}'">
                         <span>${sanitize(ch.title)}</span>
                         <i class="fas fa-chevron-right"></i>
                     </li>
@@ -744,13 +744,13 @@ async function loadAndRenderReader() {
     const navContainer = document.getElementById('reader-nav');
     if (navContainer) {
         navContainer.innerHTML = `
-            <button type="button" class="btn-read" ${chapterIdx === 0 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx - 1}'"`} title="Bab Sebelumnya" aria-label="Halaman Sebelumnya">
+            <button type="button" class="btn-read" ${chapterIdx === 0 ? 'disabled' : `onclick="location.href='read?id=${novelId}&ch=${chapterIdx - 1}'"`} title="Bab Sebelumnya" aria-label="Halaman Sebelumnya">
                 <i class="fas fa-arrow-left"></i> Sebelumnya
             </button>
-            <button type="button" class="btn-read" onclick="location.href='detail.html?id=${novelId}'" title="Kembali ke Daftar Bab" aria-label="Kembali ke Daftar Bab">
+            <button type="button" class="btn-read" onclick="location.href='detail?id=${novelId}'" title="Kembali ke Daftar Bab" aria-label="Kembali ke Daftar Bab">
                 <i class="fas fa-list"></i> Daftar Bab
             </button>
-            <button type="button" class="btn-read" ${chapterIdx >= novel.chapters.length - 1 ? 'disabled' : `onclick="location.href='read.html?id=${novelId}&ch=${chapterIdx + 1}'"`} title="Bab Selanjutnya" aria-label="Halaman Selanjutnya">
+            <button type="button" class="btn-read" ${chapterIdx >= novel.chapters.length - 1 ? 'disabled' : `onclick="location.href='read?id=${novelId}&ch=${chapterIdx + 1}'"`} title="Bab Selanjutnya" aria-label="Halaman Selanjutnya">
                 Selanjutnya <i class="fas fa-arrow-right"></i>
             </button>
         `;
@@ -800,7 +800,7 @@ window.toggleTTS = () => {
  */
 const historyItemTemplate = (item) => `
     <div class="novel-card-wrapper" id="history-item-${item.id}">
-        <a href="read.html?id=${item.id}&ch=${item.lastChapterIdx}" class="novel-card-link">
+        <a href="read?id=${item.id}&ch=${item.lastChapterIdx}" class="novel-card-link">
             <div class="novel-card">
                 <img src="${item.image || 'https://via.placeholder.com/150x200'}" alt="${sanitize(item.title)}">
                 <h3>${sanitize(item.title)}</h3>

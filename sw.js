@@ -1,10 +1,10 @@
 const CACHE_NAME = 'novelfire-v1';
 const ASSETS = [
   '/',
-  '/index.html',
-  '/admin.html',
-  '/detail.html',
-  '/read.html',
+  '/index',
+  '/admin',
+  '/detail',
+  '/read',
   '/css/style.css',
   '/js/script.js',
   '/js/modules/auth.js',
