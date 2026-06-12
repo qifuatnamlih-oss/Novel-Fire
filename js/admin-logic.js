@@ -45,17 +45,30 @@ async function checkSession() {
         return;
     }
 
-    // Ambil role langsung dari tabel profiles untuk validasi yang lebih kuat
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+    // Ambil role dari metadata (sebagai cadangan) atau dari tabel profiles
+    const metadataRole = session.user.app_metadata?.role || session.user.user_metadata?.role;
+    
+    try {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle(); // Gunakan maybeSingle agar tidak error jika profil belum ada
 
-    if (profile?.role !== 'admin') {
-        console.warn("Admin: Akses ditolak: User bukan admin. Redirecting to index.html.");
-        window.location.href = "index";
-        return;
+        const userRole = profile?.role || metadataRole;
+
+        if (userRole !== 'admin') {
+            console.warn("Admin: Akses ditolak. Role ditemukan:", userRole);
+            alert("Akses Ditolak: Anda tidak memiliki hak akses administrator.");
+            window.location.href = "index.html";
+            return;
+        }
+    } catch (err) {
+        console.error("Gagal verifikasi role admin:", err);
+        if (metadataRole !== 'admin') {
+            window.location.href = "index.html";
+            return;
+        }
     }
     
     loginSection.style.display = 'none';
@@ -484,8 +497,11 @@ async function renderVisitorChart() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("Admin: DOMContentLoaded event fired. Starting admin page initialization.");
     const initialized = await initSupabase();
+    if (!initialized) {
+        alert("Koneksi ke database gagal. Pastikan konfigurasi API sudah benar.");
+        return;
+    }
     console.log("Admin: Supabase initialized successfully in admin-logic.js.");
-    if (!initialized) return;
     
     // Initialize DOM elements
     form = document.getElementById('add-novel-form');
