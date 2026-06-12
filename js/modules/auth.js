@@ -29,7 +29,7 @@ function internalToggleMenu() {
     }
 }
 
-export function updateAuthUI(user, toggleUserMenu, handleLogout, handleLogin) {
+export function updateAuthUI(user, handleLogout, handleLogin) {
     const nav = document.getElementById('main-nav');
     if (!nav) return;
 

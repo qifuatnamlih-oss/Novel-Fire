@@ -41,7 +41,6 @@ async function bootstrap() {
         currentUser = user;
         AuthService.updateAuthUI(
             user,
-            AuthService.toggleUserMenu,
             AuthService.logout,
             AuthService.login
         );
@@ -94,7 +93,8 @@ async function initNotifications(userId) {
     const wrapper = document.getElementById('notif-wrapper');
 
     if (!wrapper || !bell) return;
-    wrapper.style.display = 'flex'; // Tampilkan bell hanya jika user login
+    wrapper.classList.remove('display-none');
+    wrapper.style.display = 'flex'; // Pastikan display flex aktif setelah class dihapus
 
     // Fungsi untuk memuat data notifikasi dari database
     const updateNotifUI = async () => {
@@ -148,6 +148,7 @@ async function initNotifications(userId) {
         e.stopPropagation();
         const isOpening = dropdown.classList.contains('display-none');
         dropdown.classList.toggle('display-none');
+        bell.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
         
         if (isOpening && !countBadge.classList.contains('display-none')) {
             // Tandai sudah dibaca di database agar tidak muncul lagi
@@ -163,7 +164,10 @@ async function initNotifications(userId) {
         }
     });
 
-    document.addEventListener('click', () => dropdown.classList.add('display-none'));
+    document.addEventListener('click', () => {
+        dropdown.classList.add('display-none');
+        bell.setAttribute('aria-expanded', 'false');
+    });
 }
 
 /**
@@ -172,12 +176,21 @@ async function initNotifications(userId) {
 function applyBranding(logoUrl) {
     // Mengambil logo dari localStorage (atau nantinya dari Supabase settings)
     const url = logoUrl || localStorage.getItem('site_logo_url');
-    const headerLink = document.querySelector('header h1 a');
+    const headerLink = document.querySelector('.header-logo-link') || document.querySelector('header h1 a');
+
+    if (!url || !headerLink) return;
+
+    let img = headerLink.querySelector('img.header-logo');
     
-    if (url && headerLink) {
-        // Mengganti teks logo dengan elemen gambar jika logo tersedia
-        headerLink.innerHTML = `<img src="${url}" alt="NovelFire Logo" class="header-logo">`;
+    if (!img) {
+        img = document.createElement('img');
+        img.className = 'header-logo';
+        img.alt = 'NovelFire Logo';
+        headerLink.replaceChildren(img); // Menghapus teks lama dan memasukkan img secara efisien
     }
+
+    // Hindari update jika src sudah sama untuk mencegah flicker
+    if (img.src !== url) img.src = url;
 }
 
 /**

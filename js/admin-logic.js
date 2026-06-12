@@ -60,13 +60,13 @@ async function checkSession() {
         if (userRole !== 'admin') {
             console.warn("Admin: Akses ditolak. Role ditemukan:", userRole);
             alert("Akses Ditolak: Anda tidak memiliki hak akses administrator.");
-            window.location.href = "index.html";
+            window.location.href = "index"; // Pastikan tidak menggunakan .html jika server tidak mendukungnya
             return;
         }
     } catch (err) {
         console.error("Gagal verifikasi role admin:", err);
         if (metadataRole !== 'admin') {
-            window.location.href = "index.html";
+            window.location.href = "index"; // Pastikan tidak menggunakan .html di sini juga
             return;
         }
     }
