@@ -100,7 +100,7 @@ async function initNotifications(userId) {
     const updateNotifUI = async () => {
         const { data, error } = await supabase
             .from('notifications')
-            .select('*, actor:profiles(username)')
+            .select('*, actor:profiles!actor_id(username)')
             .eq('receiver_id', userId)
             .eq('is_read', false)
             .order('created_at', { ascending: false })
