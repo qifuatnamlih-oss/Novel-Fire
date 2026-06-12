@@ -44,7 +44,41 @@ async function bootstrap() {
             AuthService.logout,
             AuthService.login
         );
-        if (user) initNotifications(user.id);
+        if (user) {
+            initNotifications(user.id);
+
+            // Update foto profil dinamis dari metadata Supabase
+            const avatarImg = document.getElementById('user-avatar');
+            const userDropdown = document.getElementById('user-dropdown');
+            const userNameDisplay = document.getElementById('user-name-display');
+            const adminWrapper = document.getElementById('admin-link-wrapper');
+            const logoutBtn = document.getElementById('nav-logout-btn');
+
+            if (user.user_metadata?.avatar_url && avatarImg) {
+                avatarImg.src = user.user_metadata.avatar_url;
+            }
+
+            if (userNameDisplay) {
+                userNameDisplay.innerText = user.user_metadata?.full_name || 'Pengguna';
+            }
+
+            if (adminWrapper && user.user_metadata?.role === 'admin') {
+                adminWrapper.innerHTML = '<a href="admin"><i class="fas fa-user-shield"></i> Dashboard Admin</a>';
+            }
+
+            // Event click avatar untuk toggle dropdown menu
+            avatarImg?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown?.classList.toggle('display-none');
+                // Tutup dropdown notifikasi jika sedang terbuka
+                document.getElementById('notif-dropdown')?.classList.add('display-none');
+            });
+
+            logoutBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                AuthService.logout();
+            });
+        }
         console.log("Bootstrap: User session checked. User:", user ? user.id : "Guest");
     });
 
@@ -167,6 +201,10 @@ async function initNotifications(userId) {
     document.addEventListener('click', () => {
         dropdown.classList.add('display-none');
         bell.setAttribute('aria-expanded', 'false');
+
+        // Juga tutup dropdown profil saat klik di luar
+        const userDropdown = document.getElementById('user-dropdown');
+        if (userDropdown) userDropdown.classList.add('display-none');
     });
 }
 

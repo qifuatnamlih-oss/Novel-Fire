@@ -33,33 +33,24 @@ export function updateAuthUI(user, handleLogout, handleLogin) {
     const nav = document.getElementById('main-nav');
     if (!nav) return;
 
-    let authBtn = document.getElementById('auth-nav-btn');
-    if (!authBtn) {
-        authBtn = document.createElement('div');
-        authBtn.id = 'auth-nav-btn';
-        authBtn.className = 'nav-translate';
-        nav.appendChild(authBtn);
+    const notifWrapper = document.getElementById('notif-wrapper');
+    let loginBtn = document.getElementById('login-btn');
+
+    if (!loginBtn) {
+        loginBtn = document.createElement('button');
+        loginBtn.id = 'login-btn';
+        loginBtn.className = 'btn-read text-xs p-5 px-15';
+        loginBtn.innerText = 'Login';
+        nav.querySelector('.nav-right-actions')?.appendChild(loginBtn);
     }
 
     if (user) {
-        const isAdmin = user.user_metadata?.role === 'admin';
-        authBtn.innerHTML = `
-            <div class="user-profile-nav" id="profile-trigger">
-                <img src="${user.user_metadata?.avatar_url || 'https://placehold.co/30'}" class="nav-avatar">
-                <span class="notification-badge display-none" id="noti-badge"></span>
-            </div>
-            <div id="user-menu" class="user-menu-dropdown display-none">
-                <p>Halo, <strong>${user.user_metadata?.full_name || 'User'}</strong></p>
-                <hr>
-                ${isAdmin ? '<a href="admin"><i class="fas fa-user-shield"></i> Dashboard Admin</a>' : ''}
-                <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-        `;
-        document.getElementById('profile-trigger')?.addEventListener('click', internalToggleMenu);
-        document.getElementById('logout-link')?.addEventListener('click', handleLogout);
+        notifWrapper?.classList.remove('display-none');
+        loginBtn.classList.add('display-none');
     } else {
-        authBtn.innerHTML = `<button id="login-btn" class="btn-read text-xs p-5 px-15">Login</button>`;
-        document.getElementById('login-btn')?.addEventListener('click', handleLogin);
+        notifWrapper?.classList.add('display-none');
+        loginBtn.classList.remove('display-none');
+        loginBtn.onclick = handleLogin;
     }
 }
 
