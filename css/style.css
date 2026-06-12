@@ -1465,7 +1465,8 @@ body.dark-mode .read-content p.highlight {
     height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     align-items: center;
     justify-content: center;
 }
