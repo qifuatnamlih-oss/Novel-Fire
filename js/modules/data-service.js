@@ -71,7 +71,7 @@ export async function fetchNovelDetail(novelId) {
     const supabase = getSupabase();
     const { data, error } = await supabase
         .from('novels')
-        .select('id, title, author, category, image, chapters, description') // Select all necessary fields
+        .select('id, title, author, category, image, chapters, description') // Pastikan menggunakan 'description'
         .eq('id', novelId)
         .single();
 
